@@ -54,6 +54,11 @@ tr.today td.d::after{content:" \00b7 today";font-weight:400;font-size:12px}
 .chip{font:inherit;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--accent);cursor:pointer}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 #tTypes{text-align:left;font-size:13px;font-weight:500;line-height:1.5}
+.combo{position:relative}
+.suggest{position:absolute;left:0;right:0;top:100%;z-index:20;margin-top:2px;max-height:260px;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.suggest button{display:block;width:100%;text-align:left;font:inherit;padding:12px;background:none;border:0;border-bottom:1px solid var(--line);color:var(--ink);cursor:pointer}
+.suggest button:last-child{border-bottom:0}
+.suggest button:hover{background:#e8f3f3}
 #msg{font-size:13px;color:var(--muted);margin-left:4px}
 html{-webkit-text-size-adjust:100%}
 @media (max-width:720px){
@@ -99,7 +104,7 @@ html{-webkit-text-size-adjust:100%}
   <p class="status" id="status" role="status"></p>
 
   <div class="hdr">
-    <div><label for="emp">Employee name</label><input id="emp" type="text" list="emplist" autocomplete="off"><datalist id="emplist"></datalist></div>
+    <div><label for="emp">Employee name</label><div class="combo"><input id="emp" type="text" autocomplete="off"><div class="suggest" id="emplist" hidden></div></div></div>
     <div><label for="pos">Position</label><input id="pos" type="text"></div>
     <div><label for="div">Division</label><input id="div" type="text"></div>
     <div><label for="loc">Location</label><input id="loc" type="text"></div>
@@ -422,7 +427,6 @@ html{-webkit-text-size-adjust:100%}
   }
   function setRoster(list){
     roster=(list||[]).filter(function(e){return e&&e.name});
-    $("emplist").innerHTML=roster.map(function(e){return '<option value="'+esc(e.name)+'"></option>'}).join("");
     $("emp").placeholder=roster.length?"Start typing your name":"";
   }
   function loadRoster(){
@@ -449,6 +453,39 @@ html{-webkit-text-size-adjust:100%}
   }
   $("emp").addEventListener("input",applyEmployee);
   $("emp").addEventListener("change",applyEmployee);
+  function hideSuggest(){$("emplist").hidden=true}
+  function showSuggest(){
+    var box=$("emplist");
+    if(!roster.length){box.hidden=true;return}
+    var q=$("emp").value.trim().toLowerCase();
+    var list=roster.filter(function(e){return !q||e.name.toLowerCase().indexOf(q)!==-1}).slice(0,60);
+    box._list=list;
+    if(list.length===1&&list[0].name.toLowerCase()===q){box.hidden=true;return}
+    if(!list.length){
+      box.innerHTML='<div style="padding:12px;color:var(--muted);font-size:13px">No match. Check the spelling.</div>';
+      box.hidden=false;return;
+    }
+    box.innerHTML=list.map(function(e,i){return '<button type="button" data-n="'+i+'">'+esc(e.name)+'</button>'}).join("");
+    box.hidden=false;
+  }
+  function pickEmployee(e){
+    $("emp").value=e.name;applyEmployee();hideSuggest();$("emp").blur();
+  }
+  $("emplist").addEventListener("mousedown",function(ev){
+    var b=ev.target.closest("button[data-n]");if(!b)return;
+    ev.preventDefault();
+    pickEmployee($("emplist")._list[+b.getAttribute("data-n")]);
+  });
+  $("emp").addEventListener("focus",showSuggest);
+  $("emp").addEventListener("input",showSuggest);
+  $("emp").addEventListener("blur",function(){setTimeout(hideSuggest,200)});
+  $("emp").addEventListener("keydown",function(ev){
+    if(ev.key==="Escape")hideSuggest();
+    if(ev.key==="Enter"&&!$("emplist").hidden){
+      var l=$("emplist")._list;
+      if(l&&l.length===1){ev.preventDefault();pickEmployee(l[0])}
+    }
+  });
   var OUTBOX="timesheet-outbox-v1";
   function getOutbox(){try{return JSON.parse(localStorage.getItem(OUTBOX)||"[]")}catch(e){return []}}
   function setOutbox(a){try{localStorage.setItem(OUTBOX,JSON.stringify(a))}catch(e){}}
