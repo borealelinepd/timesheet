@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boreal E-line Pump Down Timesheet</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f6e6e">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Boreal Timesheet">
+<style>
+:root{--bg:#f2f4f6;--surface:#fff;--ink:#1b2430;--muted:#5b6673;--line:#d5dbe1;--accent:#0f6e6e;--accent-ink:#fff;--wknd:#f4f6f8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "IBM Plex Sans","Segoe UI",system-ui,sans-serif}
+.wrap{max-width:1100px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:24px;margin:0 0 14px;font-weight:600}
+.hdr{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:4px}
+input,select{font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.grid{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:1080px}
+th,td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left}
+th{font-weight:500;font-size:13px;color:var(--muted);background:#f8f9fa;white-space:nowrap}
+td.d{white-space:nowrap;font-weight:500;min-width:92px}
+tr.we td{background:var(--wknd)}
+tr.we td input,tr.we td select{background:var(--surface)}
+td.n input{text-align:right;font-variant-numeric:tabular-nums}
+tfoot td{border-bottom:0;background:#f8f9fa;font-weight:600;font-variant-numeric:tabular-nums}
+.sum{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:14px;color:var(--muted)}
+.sum b{color:var(--ink);font-variant-numeric:tabular-nums}
+.bar{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;align-items:center}
+button.b{font:inherit;padding:8px 14px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.b.p{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.step{display:flex;gap:6px;align-items:stretch}
+.step .b{min-width:44px;min-height:40px;font-size:20px;line-height:1;padding:0 10px}
+#pcur{flex:1;display:flex;align-items:center;justify-content:center;font-weight:500;border:1px solid var(--line);border-radius:6px;background:var(--surface);padding:0 8px;white-space:nowrap}
+.cur{font:inherit;font-size:13px;background:none;border:0;color:var(--accent);padding:6px 0 0;cursor:pointer;text-decoration:underline}
+.fd{font:inherit;font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--accent);cursor:pointer;white-space:nowrap}
+.fd:hover:not(:disabled){background:#e8f3f3}
+.fd:disabled{color:var(--line);cursor:default}
+.csvbox{margin-top:16px}
+.csvbox textarea{width:100%;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface);color:var(--ink)}
+.status{margin:0 0 14px;font-size:13px;color:var(--muted)}
+tr.today td.d::after{content:" \00b7 today";font-weight:400;font-size:12px}
+.brand{display:flex;align-items:center;gap:18px;margin-bottom:12px}
+.brand img{width:150px;height:auto;display:block;flex:none}
+.brand h1{margin:0}
+.hint{margin:0 0 10px;font-size:13px;color:var(--muted)}
+.hint p{margin:0 0 4px}
+.chips{display:flex;gap:6px;margin-top:4px}
+.chip{font:inherit;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--accent);cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+#tTypes{text-align:left;font-size:13px;font-weight:500;line-height:1.5}
+#msg{font-size:13px;color:var(--muted);margin-left:4px}
+html{-webkit-text-size-adjust:100%}
+@media (max-width:720px){
+  .wrap{padding:14px 12px 32px}
+  h1{font-size:21px}
+  .grid{overflow:visible;background:none;border:0}
+  table,tbody,tr,td{display:block}
+  table{min-width:0}
+  thead{display:none}
+  tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;margin-bottom:12px;padding:12px}
+  tbody tr.we{background:var(--wknd)}
+  tbody tr.today{border-color:var(--accent)}
+  td{border:0;padding:0;min-width:0}
+  tr.we td{background:transparent}
+  td.d{grid-column:1;grid-row:1;align-self:center;font-size:16px}
+  td.fdc{grid-column:2;grid-row:1;justify-self:end}
+  td[data-label]::before{content:attr(data-label);display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+  td[data-label="Client"],td[data-label="Notes"],td[data-label="Day off type (if any)"]{grid-column:1/-1}
+  input,select{font-size:16px;min-height:44px;width:100%!important;min-width:0!important}
+  .fd{min-height:40px;font-size:14px;padding:6px 12px}
+  tfoot,tfoot tr{display:flex}
+  tfoot tr{flex-wrap:wrap;gap:8px 24px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px}
+  tfoot td{background:none;padding:0}
+  tfoot td:first-child{flex-basis:100%}
+  tfoot td#tTypes{flex-basis:100%}
+  tfoot td:empty{display:none}
+  .bar .b{flex:1 1 42%;min-height:44px}
+  .chip{min-height:34px;padding:4px 14px;font-size:14px}
+  .brand{gap:12px}
+  .brand img{width:96px}
+  .brand h1{font-size:19px}
+}
+@page{size:landscape}
+@media print{body{background:#fff}.bar,.fd,.csvbox,.chips{display:none}.grid{overflow:visible;border:0}table{min-width:0;font-size:11px}input,select{border:0;padding:2px;appearance:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <img src="logo.png" alt="Boreal E-line Pump Down" width="150" height="114">
+    <h1>Boreal E-line Pump Down Timesheet</h1>
+  </div>
+  <p class="status" id="status" role="status"></p>
+
+  <div class="hdr">
+    <div><label for="emp">Employee name</label><input id="emp" type="text" list="emplist" autocomplete="off"><datalist id="emplist"></datalist></div>
+    <div><label for="pos">Position</label><input id="pos" type="text"></div>
+    <div><label for="div">Division</label><input id="div" type="text"></div>
+    <div><label for="loc">Location</label><input id="loc" type="text"></div>
+    <div><label>Pay period</label>
+      <div class="step">
+        <button type="button" class="b" id="prev" aria-label="Previous pay period">&#8249;</button>
+        <div id="pcur" aria-live="polite"></div>
+        <button type="button" class="b" id="next" aria-label="Next pay period">&#8250;</button>
+      </div>
+      <button type="button" class="cur" id="now" hidden>Go to current period</button>
+    </div>
+  </div>
+
+  <div class="hint">
+    <p><b>Client:</b> type the client name. If you were in the shop, tap <b>Shop</b>. If you were on shift on a weekend but weren't called out, tap <b>On call</b>.</p>
+    <p><b>Day off type:</b> only fill this in on days you take off. If you work on one of your scheduled days off, choose <b>Day off worked</b>. Leave it blank on your regular workdays.</p>
+  </div>
+
+  <div class="grid">
+    <table>
+      <thead><tr>
+        <th>Date</th><th>Client</th><th>Notes</th><th>Unit</th><th>LOA</th>
+        <th>Meal hours</th><th>Personal km</th><th>Day off type (if any)</th><th></th>
+      </tr></thead>
+      <tbody id="rows"></tbody>
+      <tfoot><tr><td colspan="5">Totals</td><td id="tMeal" class="n" data-label="Meal hours">0.00</td><td id="tKm" class="n" data-label="Personal km">0</td><td id="tTypes" colspan="2" data-label="Days off"></td></tr></tfoot>
+    </table>
+  </div>
+
+  <div class="bar">
+    <button class="b p" id="email" type="button">Submit timesheet</button>
+    <button class="b" id="csv" type="button">Download CSV</button>
+    <button class="b" id="print" type="button">Print</button>
+    <button class="b" id="clear" type="button">Clear this period</button>
+    <span id="msg" role="status"></span>
+  </div>
+
+  <div class="csvbox" id="csvbox" hidden>
+    <label for="csvtext">CSV text. If the file didn't download, copy this instead.</label>
+    <textarea id="csvtext" readonly rows="8"></textarea>
+    <div class="bar"><button class="b p" id="copy" type="button">Copy CSV</button><button class="b" id="closebox" type="button">Close</button></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // ---- Edit these to change the dropdowns and defaults ----
+  var DAY_TYPES=["Day off","Day off worked","Vacation/time off","Unpaid day taken"];
+  var LOA_OPTIONS=["Yes","No"];
+  var DEFAULTS={div:"Pumpdown",loc:"GP"};
+  var APPS_SCRIPT_URL="https://script.google.com/macros/s/AKfycbyBmYJ_qS6P1w64HNZLIpQf5gI4ep9Bap89yfCArJtlCGFWnCciODwmCrtnW8uO6vWn7g/exec"; // paste your Google Apps Script web app URL here: emails your manager a PDF and CSV attachment
+  var WEB3FORMS_KEY="";   // paste your Web3Forms access key here: the page then emails your manager directly
+  var ATTACH_CSV=false;   // set to true once your Web3Forms plan is Pro: the CSV is then attached to the email
+  var MANAGER_EMAIL="";   // optional fallback, used only when no key is set above
+  // ---------------------------------------------------------
+  var KEY="timesheet-v2";
+  var MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  var WD=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  var $=function(id){return document.getElementById(id)};
+  var state={hdr:{emp:"",pos:"",div:DEFAULTS.div,loc:DEFAULTS.loc},period:"",entries:{}};
+
+  function pad(n){return n<10?"0"+n:""+n}
+  function todayKey(){var n=new Date();return n.getFullYear()+"-"+pad(n.getMonth()+1)+"-"+pad(n.getDate())}
+  function num(v){var n=parseFloat(v);return isNaN(n)?0:n}
+  function say(t){$("msg").textContent=t;if(t)setTimeout(function(){if($("msg").textContent===t)$("msg").textContent=""},6000)}
+  function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+
+  // period value looks like "2026-11-1" (1st-15th) or "2026-11-2" (16th-end)
+  function parsePeriod(p){
+    var a=p.split("-"),y=+a[0],m=+a[1]-1,half=+a[2];
+    var last=new Date(y,m+1,0).getDate();
+    return {y:y,m:m,start:half===1?1:16,end:half===1?15:last};
+  }
+  function periodLabel(p){var o=parsePeriod(p);return MON[o.m]+" "+o.start+"\u2013"+o.end+", "+o.y}
+  function periodForDate(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+(d.getDate()<=15?1:2)}
+
+
+  function opts(list,cur){
+    var s='<option value=""></option>';
+    list.forEach(function(o){s+='<option'+(o===cur?' selected':'')+'>'+esc(o)+'</option>'});
+    return s;
+  }
+
+  function renderRows(){
+    var p=parsePeriod(state.period),html="";
+    for(var day=p.start;day<=p.end;day++){
+      var dt=new Date(p.y,p.m,day),key=p.y+"-"+pad(p.m+1)+"-"+pad(day);
+      var e=state.entries[key]||{},wk=dt.getDay()===0||dt.getDay()===6;
+      html+='<tr class="'+(wk?'we':'')+(key===todayKey()?' today':'')+'" data-date="'+key+'">'+
+        '<td class="d">'+WD[dt.getDay()]+' '+MON[p.m]+' '+day+'</td>'+
+        '<td data-label="Client"><input type="text" data-k="client" aria-label="Client" value="'+esc(e.client)+'"><div class="chips"><button type="button" class="chip" data-chip="Shop">Shop</button><button type="button" class="chip" data-chip="On call">On call</button></div></td>'+
+        '<td data-label="Notes"><input type="text" data-k="notes" aria-label="Notes" value="'+esc(e.notes)+'"></td>'+
+        '<td data-label="Unit"><input type="text" data-k="unit" aria-label="Unit" value="'+esc(e.unit)+'" style="width:90px"></td>'+
+        '<td data-label="LOA"><select data-k="loa" aria-label="LOA" style="width:90px">'+opts(LOA_OPTIONS,e.loa)+'</select></td>'+
+        '<td class="n" data-label="Meal hours"><input type="number" min="0" step="0.25" inputmode="decimal" data-k="meal" aria-label="Meal hours" value="'+esc(e.meal)+'" style="width:84px"></td>'+
+        '<td class="n" data-label="Personal km"><input type="number" min="0" step="1" inputmode="decimal" data-k="km" aria-label="Personal km" value="'+esc(e.km)+'" style="width:90px"></td>'+
+        '<td data-label="Day off type (if any)"><select data-k="type" aria-label="Day off type. Only for days off, or a scheduled day off you worked. Leave blank on regular workdays" style="min-width:150px">'+opts(DAY_TYPES,e.type)+'</select></td>'+
+        '<td class="fdc"><button type="button" class="fd" data-fill="1" title="Copy everything from the row above"'+(day===p.start?' disabled':'')+'>Fill from above</button></td>'+
+      '</tr>';
+    }
+    $("rows").innerHTML=html;
+    $("rows").querySelectorAll("tr").forEach(syncChips);
+    totals();
+  }
+
+  function periodDates(){
+    var p=parsePeriod(state.period),a=[];
+    for(var d=p.start;d<=p.end;d++)a.push(p.y+"-"+pad(p.m+1)+"-"+pad(d));
+    return a;
+  }
+
+  function totals(){
+    var meal=0,km=0,counts={};
+    DAY_TYPES.forEach(function(t){counts[t]=0});
+    periodDates().forEach(function(k){
+      var e=state.entries[k];if(!e)return;
+      meal+=num(e.meal);km+=num(e.km);
+      if(e.type&&counts.hasOwnProperty(e.type))counts[e.type]++;
+    });
+    $("tMeal").textContent=meal.toFixed(2);
+    $("tKm").textContent=String(Math.round(km*10)/10);
+    $("tTypes").innerHTML=DAY_TYPES.filter(function(d){return counts[d]>0}).map(function(d){return '<div>'+esc(d)+': '+counts[d]+'</div>'}).join("");
+    return {meal:meal,km:km,counts:counts};
+  }
+
+  var savedText="Entries save on this device as you type.";
+  var flushing=false;
+  function save(){
+    try{
+      localStorage.setItem(KEY,JSON.stringify(state));
+      savedText="Saved on this device at "+new Date().toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});
+    }catch(e){savedText="Couldn't save on this device."}
+    showStatus();
+  }
+  function showStatus(){
+    var parts=[savedText];
+    if(!navigator.onLine)parts.push("Offline");
+    var n=getOutbox().length;
+    if(n)parts.push(n+" waiting to send");
+    $("status").textContent=parts.join(" \u00b7 ");
+  }
+  function load(){
+    try{
+      var s=JSON.parse(localStorage.getItem(KEY)||"null");
+      if(s){
+        state.hdr=s.hdr||state.hdr;state.entries=s.entries||{};
+      }
+    }catch(e){}
+  }
+
+  $("rows").addEventListener("input",function(ev){
+    var t=ev.target,k=t.getAttribute("data-k");if(!k)return;
+    var date=t.closest("tr").getAttribute("data-date");
+    (state.entries[date]=state.entries[date]||{})[k]=t.value;
+    if(k==="client")syncChips(t.closest("tr"));
+    totals();save();
+  });
+  $("rows").addEventListener("change",function(ev){
+    var t=ev.target;if(t.tagName!=="SELECT")return;
+    var date=t.closest("tr").getAttribute("data-date");
+    (state.entries[date]=state.entries[date]||{})[t.getAttribute("data-k")]=t.value;
+    totals();save();
+  });
+  ["emp","pos","div","loc"].forEach(function(id){
+    $(id).addEventListener("input",function(){state.hdr[id]=$(id).value;save()});
+  });
+  function syncChips(tr){
+    var inp=tr.querySelector('[data-k="client"]');if(!inp)return;
+    var v=inp.value.trim().toLowerCase();
+    tr.querySelectorAll("[data-chip]").forEach(function(b){b.classList.toggle("on",v===b.getAttribute("data-chip").toLowerCase())});
+  }
+  $("rows").addEventListener("click",function(ev){
+    var b=ev.target.closest("[data-chip]");if(!b)return;
+    var tr=b.closest("tr"),inp=tr.querySelector('[data-k="client"]');
+    inp.value=b.classList.contains("on")?"":b.getAttribute("data-chip");
+    var date=tr.getAttribute("data-date");
+    (state.entries[date]=state.entries[date]||{}).client=inp.value;
+    syncChips(tr);totals();save();
+  });
+  var FIELDS=["client","notes","unit","loa","meal","km","type"];
+  function copyField(tr,prev,k){
+    var src=prev.querySelector('[data-k="'+k+'"]'),dst=tr.querySelector('[data-k="'+k+'"]');
+    if(!src||!dst)return;
+    dst.value=src.value;
+    var date=tr.getAttribute("data-date");
+    (state.entries[date]=state.entries[date]||{})[k]=dst.value;
+    if(k==="client")syncChips(tr);
+  }
+  $("rows").addEventListener("click",function(ev){
+    var b=ev.target.closest("[data-fill]");if(!b||b.disabled)return;
+    var tr=b.closest("tr"),prev=tr.previousElementSibling;if(!prev)return;
+    FIELDS.forEach(function(k){copyField(tr,prev,k)});
+    totals();save();say("Filled from the row above.");
+  });
+  // Ctrl+D (or Cmd+D) copies just the focused cell from the row above
+  $("rows").addEventListener("keydown",function(ev){
+    if(!(ev.ctrlKey||ev.metaKey)||ev.key.toLowerCase()!=="d")return;
+    var t=ev.target,k=t.getAttribute&&t.getAttribute("data-k");if(!k)return;
+    var tr=t.closest("tr"),prev=tr.previousElementSibling;
+    ev.preventDefault();if(!prev)return;
+    copyField(tr,prev,k);totals();save();
+  });
+  function shiftPeriod(p,dir){
+    var a=p.split("-"),y=+a[0],m=+a[1]-1,h=+a[2];
+    if(dir>0){if(h===1)h=2;else{h=1;m++}}else{if(h===2)h=1;else{h=2;m--}}
+    var d=new Date(y,m,1);
+    return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+h;
+  }
+  function setPeriod(p){
+    resetClear();
+    state.period=p;
+    $("pcur").textContent=periodLabel(p);
+    $("now").hidden=(p===periodForDate(new Date()));
+    renderRows();save();
+  }
+  $("prev").onclick=function(){setPeriod(shiftPeriod(state.period,-1))};
+  $("next").onclick=function(){setPeriod(shiftPeriod(state.period,1))};
+  $("now").onclick=function(){setPeriod(periodForDate(new Date()))};
+  $("print").onclick=function(){window.print()};
+  var clearTimer=null;
+  function resetClear(){clearTimeout(clearTimer);clearTimer=null;$("clear").textContent="Clear this period"}
+  $("clear").onclick=function(){
+    if(!clearTimer){
+      $("clear").textContent="Tap again to clear "+periodLabel(state.period);
+      clearTimer=setTimeout(resetClear,4000);
+      return;
+    }
+    resetClear();
+    periodDates().forEach(function(k){delete state.entries[k]});
+    renderRows();save();say("Period cleared.");
+  };
+
+  function q(v){v=String(v==null?"":v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+  function typesList(c){return DAY_TYPES.filter(function(d){return c[d]>0}).map(function(d){return d+": "+c[d]})}
+  function buildCsv(){
+    var t=totals(),out=[];
+    out.push(["Employee name",state.hdr.emp].map(q).join(","));
+    out.push(["Position",state.hdr.pos].map(q).join(","));
+    out.push(["Division",state.hdr.div].map(q).join(","));
+    out.push(["Location",state.hdr.loc].map(q).join(","));
+    out.push(["Pay period",periodLabel(state.period)].map(q).join(","));
+    out.push("");
+    out.push(["Date","Client","Notes","Unit","LOA","Meal hours","Personal km","Day off type"].map(q).join(","));
+    periodDates().forEach(function(k){
+      var e=state.entries[k]||{};
+      out.push([k,e.client,e.notes,e.unit,e.loa,e.meal,e.km,e.type].map(q).join(","));
+    });
+    out.push(["Totals","","","","",t.meal.toFixed(2),t.km,typesList(t.counts).join("; ")].map(q).join(","));
+    return out.join("\n");
+  }
+  function csvName(){return "timesheet-"+state.period+".csv"}
+  function download(csv){
+    var blob=new Blob([csv],{type:"text/csv"});
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=csvName();
+    document.body.appendChild(a);a.click();a.remove();
+  }
+  function showCsv(csv){
+    $("csvtext").value=csv;
+    $("csvbox").hidden=false;
+    try{$("csvbox").scrollIntoView({block:"nearest"})}catch(e){}
+  }
+  $("copy").onclick=function(){
+    var ta=$("csvtext"),ok=false;
+    ta.focus();ta.select();ta.setSelectionRange(0,ta.value.length);
+    try{ok=document.execCommand("copy")}catch(e){}
+    if(!ok&&navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(ta.value).then(function(){say("CSV copied.")},function(){say("Press and hold the text to copy it.")});
+      return;
+    }
+    say(ok?"CSV copied.":"Press and hold the text to copy it.");
+  };
+  $("closebox").onclick=function(){$("csvbox").hidden=true};
+  $("csv").onclick=function(){
+    var csv=buildCsv();
+    try{download(csv)}catch(e){}
+    showCsv(csv);
+    say("If no file downloaded, copy the text below.");
+  };
+
+  function sheetData(){
+    var t=totals();
+    return {
+      employee:state.hdr.emp||"",position:state.hdr.pos||"",division:state.hdr.div||"",location:state.hdr.loc||"",
+      period:periodLabel(state.period),
+      rows:periodDates().map(function(k){
+        var e=state.entries[k]||{};
+        return {date:k,client:e.client||"",notes:e.notes||"",unit:e.unit||"",loa:e.loa||"",meal:e.meal||"",km:e.km||"",type:e.type||""};
+      }),
+      totals:{meal:t.meal.toFixed(2),km:Math.round(t.km*10)/10,days:typesList(t.counts)}
+    };
+  }
+  function summaryText(csv){
+    var t=totals(),L=[];
+    L.push("Employee: "+(state.hdr.emp||""));
+    L.push("Position: "+(state.hdr.pos||""));
+    L.push("Division: "+(state.hdr.div||"")+"   Location: "+(state.hdr.loc||""));
+    L.push("Pay period: "+periodLabel(state.period));
+    L.push("");
+    periodDates().forEach(function(k){
+      var e=state.entries[k]||{};
+      if(!(e.client||e.notes||e.unit||e.loa||e.meal||e.km||e.type))return;
+      L.push(k+" | "+[e.client,e.notes,e.unit?("Unit "+e.unit):"",e.loa?("LOA "+e.loa):"",e.meal?(e.meal+" meal hrs"):"",e.km?(e.km+" km"):"",e.type].filter(Boolean).join(" | "));
+    });
+    L.push("");
+    L.push("Total meal hours: "+t.meal.toFixed(2));
+    L.push("Total personal km: "+(Math.round(t.km*10)/10));
+    var tl=typesList(t.counts);if(tl.length)L.push(tl.join("   "));
+    L.push("");
+    if(csv){L.push("--- CSV (copy into a .csv file if needed) ---");L.push(csv)}
+    return L.join("\n");
+  }
+  var ROSTER_KEY="timesheet-roster-v1";
+  var roster=[];
+  function findEmployee(n){
+    n=(n||"").trim().toLowerCase();
+    for(var i=0;i<roster.length;i++){if(roster[i].name.toLowerCase()===n)return roster[i]}
+    return null;
+  }
+  function setRoster(list){
+    roster=(list||[]).filter(function(e){return e&&e.name});
+    $("emplist").innerHTML=roster.map(function(e){return '<option value="'+esc(e.name)+'"></option>'}).join("");
+    $("emp").placeholder=roster.length?"Start typing your name":"";
+  }
+  function loadRoster(){
+    try{
+      var c=JSON.parse(localStorage.getItem(ROSTER_KEY)||"null");
+      if(c&&c.list)setRoster(c.list);
+    }catch(e){}
+    if(!APPS_SCRIPT_URL||!navigator.onLine)return;
+    fetch(APPS_SCRIPT_URL+"?action=employees").then(function(r){return r.json()}).then(function(j){
+      if(j&&j.ok&&j.employees&&j.employees.length){
+        setRoster(j.employees);
+        try{localStorage.setItem(ROSTER_KEY,JSON.stringify({at:Date.now(),list:j.employees}))}catch(e){}
+      }
+    }).catch(function(){});
+  }
+  function applyEmployee(){
+    var e=findEmployee($("emp").value);if(!e)return;
+    if($("emp").value!==e.name)$("emp").value=e.name;
+    state.hdr.emp=e.name;
+    if(e.position){$("pos").value=e.position;state.hdr.pos=e.position}
+    if(e.division){$("div").value=e.division;state.hdr.div=e.division}
+    if(e.location){$("loc").value=e.location;state.hdr.loc=e.location}
+    save();
+  }
+  $("emp").addEventListener("input",applyEmployee);
+  $("emp").addEventListener("change",applyEmployee);
+  var OUTBOX="timesheet-outbox-v1";
+  function getOutbox(){try{return JSON.parse(localStorage.getItem(OUTBOX)||"[]")}catch(e){return []}}
+  function setOutbox(a){try{localStorage.setItem(OUTBOX,JSON.stringify(a))}catch(e){}}
+  function queue(p){
+    var q=getOutbox().filter(function(i){return i.subject!==p.subject});
+    q.push(p);setOutbox(q);showStatus();
+    say("You're offline. It will send by itself once you're back online and this page is open.");
+  }
+  function postToManager(p){
+    if(APPS_SCRIPT_URL){
+      return fetch(APPS_SCRIPT_URL,{
+        method:"POST",
+        headers:{"Content-Type":"text/plain;charset=utf-8"},
+        body:JSON.stringify({subject:p.subject,message:p.message,csv:p.csv,data:p.data})
+      }).then(function(r){return r.json()}).then(function(j){return !!(j&&j.ok)});
+    }
+    var fd=new FormData();
+    fd.append("access_key",WEB3FORMS_KEY);
+    fd.append("subject",p.subject);
+    fd.append("from_name",p.from_name);
+    fd.append("message",p.message);
+    if(ATTACH_CSV){
+      try{fd.append("attachment",new File([p.csv],p.filename||"timesheet.csv",{type:"text/csv"}))}catch(e){}
+    }
+    return fetch("https://api.web3forms.com/submit",{
+      method:"POST",
+      headers:{Accept:"application/json"},
+      body:fd
+    }).then(function(r){return r.json()}).then(function(j){return !!(j&&j.success)});
+  }
+  function flushOutbox(){
+    if(flushing||!navigator.onLine||!getOutbox().length)return;
+    flushing=true;
+    (function next(){
+      var item=getOutbox()[0];
+      if(!item){flushing=false;showStatus();return}
+      postToManager(item).then(function(ok){
+        if(ok){var a=getOutbox();a.shift();setOutbox(a);say("Your waiting timesheet was submitted.");next()}
+        else{flushing=false;showStatus()}
+      }).catch(function(){flushing=false;showStatus()});
+    })();
+  }
+  function sendDirect(){
+    if(!(state.hdr.emp||"").trim()){say("Enter your name first.");$("emp").focus();return}
+    if(roster.length&&!findEmployee(state.hdr.emp)){say("Pick your name from the list.");$("emp").focus();return}
+    var csv=buildCsv(),btn=$("email");
+    var p={
+      subject:"Timesheet \u2013 "+state.hdr.emp+" \u2013 "+periodLabel(state.period),
+      from_name:state.hdr.emp,
+      message:summaryText((APPS_SCRIPT_URL||ATTACH_CSV)?"":csv),
+      csv:csv,
+      filename:"timesheet-"+(state.hdr.emp||"").replace(/[^\w]+/g,"-")+"-"+state.period+".csv",
+      data:sheetData()
+    };
+    if(!navigator.onLine){queue(p);return}
+    btn.disabled=true;btn.textContent="Sending\u2026";
+    function done(){btn.disabled=false;btn.textContent="Submit timesheet"}
+    postToManager(p).then(function(ok){
+      done();
+      if(ok)say("Timesheet submitted.");
+      else{showCsv(csv);say("Couldn't send. Copy the text below and email it instead.")}
+    }).catch(function(){
+      done();
+      if(!navigator.onLine)queue(p);
+      else{showCsv(csv);say("Couldn't send. Copy the text below and email it instead.")}
+    });
+  }
+
+  // Email: on phones, opens the share sheet with the CSV attached (pick Mail).
+  // Fallback: downloads the CSV and opens a pre-filled email to attach it to.
+  $("email").onclick=function(){
+    if(APPS_SCRIPT_URL||WEB3FORMS_KEY){sendDirect();return}
+    var csv=buildCsv(),label=periodLabel(state.period),who=state.hdr.emp||"Employee";
+    var subject="Timesheet \u2013 "+who+" \u2013 "+label;
+    var body="Hi,\n\nMy timesheet for "+label+" is attached.\n\nThanks,\n"+who;
+    var file=null;
+    try{file=new File([csv],csvName(),{type:"text/csv"})}catch(e){}
+    function fallback(){
+      try{download(csv)}catch(e){}
+      showCsv(csv);
+      var a=document.createElement("a");
+      a.href="mailto:"+MANAGER_EMAIL+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
+      document.body.appendChild(a);a.click();a.remove();
+      say("Attach the downloaded CSV, or paste the text below into the email.");
+    }
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:subject,text:body}).catch(function(err){
+        if(err&&err.name==="AbortError")return;
+        fallback();
+      });
+    }else fallback();
+  };
+
+  load();
+  ["emp","pos","div","loc"].forEach(function(id){$(id).value=state.hdr[id]||""});
+  setPeriod(periodForDate(new Date()));
+  window.addEventListener("online",function(){showStatus();flushOutbox();loadRoster()});
+  window.addEventListener("offline",showStatus);
+  showStatus();flushOutbox();loadRoster();
+  var td=document.querySelector("tr.today");
+  if(td){try{td.scrollIntoView({block:"center"})}catch(e){}}
+  if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){
+    window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
+  }
+})();
+</script>
+</body>
+</html>
