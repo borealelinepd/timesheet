@@ -9,4 +9,7 @@ window.TIMESHEET_CONFIG = {
 
   // Only used when neither of the above is set (opens a pre-filled email):
   MANAGER_EMAIL: ""
+
+  // Optional. First day of the Blue crew's days off. Leave it out unless the rotation changes.
+  // SCHEDULE_ANCHOR: "2026-11-19"
 };

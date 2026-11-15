@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Boreal Timesheet">
 <style>
-:root{--navy:#001036;--gold:#e19a11;--gold-soft:#fdf3dc;--bg:#eef0f3;--surface:#fff;--ink:#0a1633;--muted:#5b6678;--line:#dde1e8;--accent:#001036;--accent-ink:#fff;--wknd:#f6f7f9;--shadow:0 1px 2px rgba(0,16,54,.06),0 6px 18px rgba(0,16,54,.07)}
+:root{--navy:#001036;--gold:#e19a11;--gold-soft:#fdf3dc;--bg:#eef0f3;--surface:#fff;--ink:#0a1633;--muted:#5b6678;--line:#dde1e8;--accent:#001036;--accent-ink:#fff;--wknd:#f6f7f9;--blue-soft:#dbe8fb;--yellow-soft:#fff1b8;--green-soft:#d7f0dd;--shadow:0 1px 2px rgba(0,16,54,.06),0 6px 18px rgba(0,16,54,.07)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
 .wrap{max-width:1280px;margin:0 auto;padding:20px 16px 40px}
@@ -33,9 +33,9 @@ td[data-label="LOA"]{min-width:86px}
 td[data-label="Meal hours"],td[data-label="Personal km"]{min-width:96px}
 td[data-label="Day off type (if any)"]{min-width:190px}
 td.fdc{white-space:nowrap}
-tr.we td{background:var(--wknd)}
-tr.today td{background:var(--gold-soft)}
-tr.we td input,tr.we td select,tr.today td input,tr.today td select{background:var(--surface)}
+tr.off-blue td{background:var(--blue-soft)}
+tr.off-yellow td{background:var(--yellow-soft)}
+tr.off-green td{background:var(--green-soft)}
 td.n input{text-align:right;font-variant-numeric:tabular-nums}
 tfoot td{border-bottom:0;border-top:2px solid var(--navy);background:#f1f3f7;font-weight:700;font-variant-numeric:tabular-nums}
 .sum{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;font-size:14px;color:var(--muted)}
@@ -57,7 +57,12 @@ button.b:disabled{opacity:.6;cursor:default}
 .csvbox{margin-top:16px}
 .csvbox textarea{width:100%;font:13px/1.4 ui-monospace,Menlo,Consolas,monospace;border:1px solid #cdd3dd;border-radius:8px;padding:8px;background:var(--surface);color:var(--ink)}
 .status{margin:0 0 14px;font-size:13px;color:var(--muted)}
-tr.today td.d::after{content:" \00b7 today";font-weight:400;font-size:12px}
+.offtag{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+.sw{display:inline-block;width:13px;height:13px;border-radius:3px;border:1px solid rgba(0,16,54,.25);vertical-align:-2px;margin:0 4px 0 8px}
+.sw.blue{background:var(--blue-soft)}
+.sw.yellow{background:var(--yellow-soft)}
+.sw.green{background:var(--green-soft)}
+.hint a{color:var(--navy);font-weight:600}
 .install{background:var(--gold-soft);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:14px}
 .install .steps{margin-top:8px}
 .install ol{margin:6px 0 0 18px;padding:0}
@@ -97,10 +102,11 @@ html{-webkit-text-size-adjust:100%}
   table{min-width:0}
   thead{display:none}
   tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;padding:14px;box-shadow:var(--shadow)}
-  tbody tr.we{background:var(--wknd)}
-  tbody tr.today{background:var(--gold-soft);border-color:var(--gold)}
+  tbody tr.off-blue{background:var(--blue-soft);border-color:#9fbdee}
+  tbody tr.off-yellow{background:var(--yellow-soft);border-color:#ebcf6a}
+  tbody tr.off-green{background:var(--green-soft);border-color:#93cf9f}
   td,td[data-label]{border:0;padding:0;min-width:0}
-  tr.we td,tr.today td{background:transparent}
+  tr.off-blue td,tr.off-yellow td,tr.off-green td{background:transparent}
   td.d{grid-column:1;grid-row:1;align-self:center;font-size:16px}
   td.fdc{grid-column:2;grid-row:1;justify-self:end}
   td[data-label]::before{content:attr(data-label);display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:3px}
@@ -122,7 +128,7 @@ html{-webkit-text-size-adjust:100%}
   .brand h1{font-size:18px}
 }
 @page{size:landscape}
-@media print{body{background:#fff}.bar,.fd,.csvbox,.chips,.install,.noprint{display:none}.grid,.hdr,.brand{box-shadow:none}.grid{overflow:visible;border:0}table{min-width:0;font-size:11px}th{background:#e9ebf0;color:#000}tr.today td,tr.we td{background:#fff}input,select{border:0;padding:2px;appearance:none}}
+@media print{body{background:#fff}.bar,.fd,.csvbox,.chips,.install,.noprint{display:none}.grid,.hdr,.brand{box-shadow:none}.grid{overflow:visible;border:0}table{min-width:0;font-size:11px}th{background:#e9ebf0;color:#000}tr.off-blue td,tr.off-yellow td,tr.off-green td{background:#fff}input,select{border:0;padding:2px;appearance:none}}
 </style>
 </head>
 <body>
@@ -159,6 +165,7 @@ html{-webkit-text-size-adjust:100%}
 
   <div class="hint">
     <p><b>Client:</b> type the client name. If you were in the shop, tap <b>Shop</b>. If you were on shift on a weekend but weren't called out, tap <b>On call</b>.</p>
+    <p class="legend"><b>Scheduled days off:</b> shaded rows are each crew's scheduled days off. <span class="sw blue"></span>Blue <span class="sw yellow"></span>Yellow <span class="sw green"></span>Green</p>
     <p><b>Day off type:</b> only fill this in on days you take off. If you work on one of your scheduled days off, choose <b>Day off worked</b>. Leave it blank on your regular workdays.</p>
   </div>
 
@@ -180,6 +187,7 @@ html{-webkit-text-size-adjust:100%}
     <button class="b" id="clear" type="button">Clear this period</button>
     <span id="msg" role="status"></span>
   </div>
+  <p class="hint noprint" style="margin:8px 0 0"><a href="reminders.ics">Add pay-day reminders to your calendar</a> (the 15th and the last day of each month).</p>
   <p class="hint noprint" style="margin:8px 0 0">Want a copy for your own records? Tap <b>Download CSV</b>. If no file downloads, use <b>Copy CSV</b> in the box that appears.</p>
 
   <div class="csvbox" id="csvbox" hidden>
@@ -196,7 +204,7 @@ html{-webkit-text-size-adjust:100%}
   var DAY_TYPES=["Day off","Day off worked","Vacation/time off","Unpaid day taken"];
   var DEFAULTS={div:"Pumpdown",loc:"GP"};
   var cfg=window.TIMESHEET_CONFIG||{};
-  var APPS_SCRIPT_URL=cfg.APPS_SCRIPT_URL||"";
+  var APPS_SCRIPT_URL=cfg.APPS_SCRIPT_URL||"https://script.google.com/macros/s/AKfycbxCFMbWC3cTaeccMUSHrFyod5QGR_MNX97G2giruPODZa24SCuJeDqTqWlcP6OBnHGJkA/exec";
   var WEB3FORMS_KEY=cfg.WEB3FORMS_KEY||"";
   var ATTACH_CSV=!!cfg.ATTACH_CSV;
   var MANAGER_EMAIL=cfg.MANAGER_EMAIL||"";
@@ -208,6 +216,19 @@ html{-webkit-text-size-adjust:100%}
   var state={hdr:{emp:"",pos:"",div:DEFAULTS.div,loc:DEFAULTS.loc},period:"",entries:{}};
 
   function pad(n){return n<10?"0"+n:""+n}
+  // Crew rotation: 15 days on, 6 days off, repeating every 21 days. Everyone works Wednesdays.
+  // SCHEDULE_ANCHOR is the first day of Blue's days off (a Thursday).
+  var SCHEDULE_ANCHOR=cfg.SCHEDULE_ANCHOR||"2026-11-19";
+  var CREWS=[{n:"Blue",c:"blue"},{n:"Yellow",c:"yellow"},{n:"Green",c:"green"}];
+  function offCrew(key){
+    var a=SCHEDULE_ANCHOR.split("-"),b=key.split("-");
+    var days=Math.round((Date.UTC(+b[0],+b[1]-1,+b[2])-Date.UTC(+a[0],+a[1]-1,+a[2]))/86400000);
+    var pos=((days%21)+21)%21;
+    if(pos<6)return CREWS[0];
+    if(pos>=7&&pos<13)return CREWS[1];
+    if(pos>=14&&pos<20)return CREWS[2];
+    return null;
+  }
   function todayKey(){var n=new Date();return n.getFullYear()+"-"+pad(n.getMonth()+1)+"-"+pad(n.getDate())}
   function num(v){var n=parseFloat(v);return isNaN(n)?0:n}
   function say(t){$("msg").textContent=t;if(t)setTimeout(function(){if($("msg").textContent===t)$("msg").textContent=""},6000)}
@@ -234,8 +255,9 @@ html{-webkit-text-size-adjust:100%}
     for(var day=p.start;day<=p.end;day++){
       var dt=new Date(p.y,p.m,day),key=p.y+"-"+pad(p.m+1)+"-"+pad(day);
       var e=state.entries[key]||{},wk=dt.getDay()===0||dt.getDay()===6;
-      html+='<tr class="'+(wk?'we':'')+(key===todayKey()?' today':'')+'" data-date="'+key+'">'+
-        '<td class="d">'+WD[dt.getDay()]+' '+MON[p.m]+' '+day+'</td>'+
+      var oc=offCrew(key);
+      html+='<tr class="'+(oc?'off-'+oc.c:'')+'" data-date="'+key+'">'+
+        '<td class="d">'+WD[dt.getDay()]+' '+MON[p.m]+' '+day+(oc?'<span class="offtag">'+oc.n+' off</span>':'')+'</td>'+
         '<td data-label="Client"><input type="text" data-k="client" aria-label="Client" value="'+esc(e.client)+'"><div class="chips"><button type="button" class="chip" data-chip="Shop">Shop</button><button type="button" class="chip" data-chip="On call">On call</button></div></td>'+
         '<td data-label="Notes"><input type="text" data-k="notes" aria-label="Notes" value="'+esc(e.notes)+'"></td>'+
         '<td data-label="Unit"><input type="text" data-k="unit" aria-label="Unit" value="'+esc(e.unit)+'" style="width:90px"></td>'+
@@ -283,6 +305,7 @@ html{-webkit-text-size-adjust:100%}
   }
   function showStatus(){
     var parts=[savedText];
+    if(!APPS_SCRIPT_URL&&!WEB3FORMS_KEY)parts.push("Settings file (config.js) not found: submitting is off");
     if(!navigator.onLine)parts.push("Offline");
     var n=getOutbox().length;
     if(n)parts.push(n+" waiting to send");
@@ -591,37 +614,18 @@ html{-webkit-text-size-adjust:100%}
     postToManager(p).then(function(ok){
       done();
       if(ok)say("Timesheet submitted. You can tap Download CSV to keep a copy for your records.");
-      else{showCsv(csv);say("Couldn't send. Copy the text below and email it instead.")}
+      else{showCsv(csv);say("Couldn't submit. Check your signal and try again. The text below is a backup copy.")}
     }).catch(function(){
       done();
       if(!navigator.onLine)queue(p);
-      else{showCsv(csv);say("Couldn't send. Copy the text below and email it instead.")}
+      else{showCsv(csv);say("Couldn't submit. Check your signal and try again. The text below is a backup copy.")}
     });
   }
 
-  // Email: on phones, opens the share sheet with the CSV attached (pick Mail).
-  // Fallback: downloads the CSV and opens a pre-filled email to attach it to.
+  // Submit sends the timesheet to the script (which saves it to Airtable).
   $("email").onclick=function(){
     if(APPS_SCRIPT_URL||WEB3FORMS_KEY){sendDirect();return}
-    var csv=buildCsv(),label=periodLabel(state.period),who=state.hdr.emp||"Employee";
-    var subject="Timesheet \u2013 "+who+" \u2013 "+label;
-    var body="Hi,\n\nMy timesheet for "+label+" is attached.\n\nThanks,\n"+who;
-    var file=null;
-    try{file=new File([csv],csvName(),{type:"text/csv"})}catch(e){}
-    function fallback(){
-      try{download(csv)}catch(e){}
-      showCsv(csv);
-      var a=document.createElement("a");
-      a.href="mailto:"+MANAGER_EMAIL+"?subject="+encodeURIComponent(subject)+"&body="+encodeURIComponent(body);
-      document.body.appendChild(a);a.click();a.remove();
-      say("Attach the downloaded CSV, or paste the text below into the email.");
-    }
-    if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
-      navigator.share({files:[file],title:subject,text:body}).catch(function(err){
-        if(err&&err.name==="AbortError")return;
-        fallback();
-      });
-    }else fallback();
+    say("Submitting isn't connected yet: this page can't find its settings (config.js).");
   };
 
   load();

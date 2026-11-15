@@ -1,0 +1,37 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Boreal E-line Pump Down//Timesheet Reminders//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Timesheet reminders
+BEGIN:VEVENT
+UID:timesheet-mid-month@borealelinepd
+DTSTAMP:20261115T000000Z
+DTSTART:20261215T080000
+DTEND:20261215T081500
+RRULE:FREQ=MONTHLY;BYMONTHDAY=15
+SUMMARY:Fill out your timesheet
+DESCRIPTION:Pay period ends today. Fill out and submit your timesheet: https://borealelinepd.github.io/timesheet/
+URL:https://borealelinepd.github.io/timesheet/
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Fill out your timesheet
+TRIGGER:PT0S
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:timesheet-month-end@borealelinepd
+DTSTAMP:20261115T000000Z
+DTSTART:20261130T080000
+DTEND:20261130T081500
+RRULE:FREQ=MONTHLY;BYMONTHDAY=-1
+SUMMARY:Fill out your timesheet
+DESCRIPTION:Pay period ends today. Fill out and submit your timesheet: https://borealelinepd.github.io/timesheet/
+URL:https://borealelinepd.github.io/timesheet/
+BEGIN:VALARM
+ACTION:DISPLAY
+DESCRIPTION:Fill out your timesheet
+TRIGGER:PT0S
+END:VALARM
+END:VEVENT
+END:VCALENDAR
