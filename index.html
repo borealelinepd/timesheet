@@ -91,6 +91,11 @@ td.ck input[type=checkbox]{width:22px;height:22px;padding:0;accent-color:var(--n
 .suggest button:last-child{border-bottom:0}
 .suggest button:hover{background:var(--gold-soft)}
 #msg{font-size:13px;color:var(--muted);margin-left:4px}
+#toast{position:fixed;left:10px;right:10px;bottom:12px;z-index:50;display:none;padding:12px 40px 12px 14px;border-radius:10px;font-size:15px;line-height:1.35;box-shadow:0 6px 24px rgba(0,16,54,.35);background:#001036;color:#fff;border-left:6px solid #e19a11;max-width:560px;margin:0 auto}
+#toast.bad{background:#7a1020;border-left-color:#ffb3bd}
+#toast.good{background:#0b4a2a;border-left-color:#7ee2a8}
+#toast button{position:absolute;top:6px;right:8px;background:none;border:0;color:#fff;font-size:22px;line-height:1;cursor:pointer}
+input.invalid{outline:2px solid #c8102e;background:#fff0f2}
 html{-webkit-text-size-adjust:100%}
 @media (max-width:720px){
   .wrap{padding:14px 12px 32px}
@@ -186,6 +191,7 @@ html{-webkit-text-size-adjust:100%}
     <button class="b" id="print" type="button">Print</button>
     <button class="b" id="clear" type="button">Clear this period</button>
     <span id="msg" role="status"></span>
+    <div id="toast" role="alert"><span id="toasttext"></span><button type="button" id="toastx" aria-label="Close">×</button></div>
   </div>
   <p class="hint noprint" style="margin:8px 0 0"><a href="reminders.ics">Add pay-day reminders to your calendar</a> (the 15th and the last day of each month).</p>
   <p class="hint noprint" style="margin:8px 0 0">Want a copy for your own records? Tap <b>Download CSV</b>. If no file downloads, use <b>Copy CSV</b> in the box that appears.</p>
@@ -204,7 +210,7 @@ html{-webkit-text-size-adjust:100%}
   var DAY_TYPES=["Day off","Day off worked","Vacation/time off","Unpaid day taken"];
   var DEFAULTS={div:"Pumpdown",loc:"GP"};
   var cfg=window.TIMESHEET_CONFIG||{};
-  var APPS_SCRIPT_URL=cfg.APPS_SCRIPT_URL||"https://script.google.com/macros/s/AKfycbxCFMbWC3cTaeccMUSHrFyod5QGR_MNX97G2giruPODZa24SCuJeDqTqWlcP6OBnHGJkA/exec";
+  var APPS_SCRIPT_URL=cfg.APPS_SCRIPT_URL||"";
   var WEB3FORMS_KEY=cfg.WEB3FORMS_KEY||"";
   var ATTACH_CSV=!!cfg.ATTACH_CSV;
   var MANAGER_EMAIL=cfg.MANAGER_EMAIL||"";
@@ -232,6 +238,14 @@ html{-webkit-text-size-adjust:100%}
   function todayKey(){var n=new Date();return n.getFullYear()+"-"+pad(n.getMonth()+1)+"-"+pad(n.getDate())}
   function num(v){var n=parseFloat(v);return isNaN(n)?0:n}
   function say(t){$("msg").textContent=t;if(t)setTimeout(function(){if($("msg").textContent===t)$("msg").textContent=""},6000)}
+  // Important results (rejections, success) stay on screen until dismissed, so they can't be missed.
+  var toastTimer=null;
+  function notify(t,kind){
+    var el=$("toast");$("toasttext").textContent=t;el.className=kind||"";el.style.display="block";
+    clearTimeout(toastTimer);
+    if(kind!=="bad")toastTimer=setTimeout(function(){el.style.display="none"},15000);
+  }
+  $("toastx").onclick=function(){$("toast").style.display="none"};
   function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;")}
 
   // period value looks like "2026-11-1" (1st-15th) or "2026-11-2" (16th-end)
@@ -262,8 +276,8 @@ html{-webkit-text-size-adjust:100%}
         '<td data-label="Notes"><input type="text" data-k="notes" aria-label="Notes" value="'+esc(e.notes)+'"></td>'+
         '<td data-label="Unit"><input type="text" data-k="unit" aria-label="Unit" value="'+esc(e.unit)+'" style="width:90px"></td>'+
         '<td data-label="LOA" class="ck"><input type="checkbox" data-k="loa" aria-label="LOA"'+(e.loa?' checked':'')+'></td>'+
-        '<td class="n" data-label="Meal hours"><input type="number" min="0" step="0.25" inputmode="decimal" data-k="meal" aria-label="Meal hours" value="'+esc(e.meal)+'" style="width:84px"></td>'+
-        '<td class="n" data-label="Personal km"><input type="number" min="0" step="1" inputmode="decimal" data-k="km" aria-label="Personal km" value="'+esc(e.km)+'" style="width:90px"></td>'+
+        '<td class="n" data-label="Meal hours"><input type="number" min="0" step="0.25" inputmode="decimal" max="24" data-k="meal" aria-label="Meal hours" value="'+esc(e.meal)+'" style="width:84px"></td>'+
+        '<td class="n" data-label="Personal km"><input type="number" min="0" step="1" inputmode="decimal" max="10000" data-k="km" aria-label="Personal km" value="'+esc(e.km)+'" style="width:90px"></td>'+
         '<td data-label="Day off type (if any)"><select data-k="type" aria-label="Day off type. Only for days off, or a scheduled day off you worked. Leave blank on regular workdays" style="min-width:150px">'+opts(DAY_TYPES,e.type)+'</select></td>'+
         '<td class="fdc"><button type="button" class="fd" data-fill="1" title="Copy everything from the row above"'+(day===p.start?' disabled':'')+'>Fill from above</button></td>'+
       '</tr>';
@@ -308,7 +322,7 @@ html{-webkit-text-size-adjust:100%}
     if(!APPS_SCRIPT_URL&&!WEB3FORMS_KEY)parts.push("Settings file (config.js) not found: submitting is off");
     if(!navigator.onLine)parts.push("Offline");
     var n=getOutbox().length;
-    if(n)parts.push(n+" waiting to send");
+    if(n)parts.push(n+(n===1?" timesheet":" timesheets")+" waiting to send");
     $("status").textContent=parts.join(" \u00b7 ");
   }
   function load(){
@@ -349,6 +363,7 @@ html{-webkit-text-size-adjust:100%}
     (state.entries[date]=state.entries[date]||{}).client=inp.value;
     syncChips(tr);totals();save();
   });
+  document.addEventListener("input",function(e){if(e.target&&e.target.classList)e.target.classList.remove("invalid")});
   var FIELDS=["client","notes","unit","loa","meal","km","type"];
   function copyField(tr,prev,k){
     var src=prev.querySelector('[data-k="'+k+'"]'),dst=tr.querySelector('[data-k="'+k+'"]');
@@ -497,18 +512,23 @@ html{-webkit-text-size-adjust:100%}
     roster=(list||[]).filter(function(e){return e&&e.name});
     $("emp").placeholder=roster.length?"Start typing your name":"";
   }
-  function loadRoster(){
+  var ROSTER_TTL=60*60*1000; // reuse the saved list for an hour before asking the server again
+  function loadRoster(force){
+    var cached=null;
     try{
-      var c=JSON.parse(localStorage.getItem(ROSTER_KEY)||"null");
-      if(c&&c.list)setRoster(c.list);
-    }catch(e){}
-    if(!APPS_SCRIPT_URL||!navigator.onLine)return;
-    fetch(APPS_SCRIPT_URL+"?action=employees").then(function(r){return r.json()}).then(function(j){
+      cached=JSON.parse(localStorage.getItem(ROSTER_KEY)||"null");
+      if(cached&&cached.list)setRoster(cached.list);
+    }catch(e){cached=null}
+    if(!APPS_SCRIPT_URL||!navigator.onLine)return Promise.resolve(false);
+    if(!force&&cached&&cached.list&&cached.list.length&&cached.at&&Date.now()-cached.at<ROSTER_TTL)return Promise.resolve(false);
+    return fetch(APPS_SCRIPT_URL+"?action=employees").then(function(r){return r.json()}).then(function(j){
       if(j&&j.ok&&j.employees&&j.employees.length){
         setRoster(j.employees);
         try{localStorage.setItem(ROSTER_KEY,JSON.stringify({at:Date.now(),list:j.employees}))}catch(e){}
+        return true;
       }
-    }).catch(function(){});
+      return false;
+    }).catch(function(){return false});
   }
   function applyEmployee(){
     var e=findEmployee($("emp").value);if(!e)return;
@@ -554,21 +574,62 @@ html{-webkit-text-size-adjust:100%}
       if(l&&l.length===1){ev.preventDefault();pickEmployee(l[0])}
     }
   });
-  var OUTBOX="timesheet-outbox-v1";
+  var OUTBOX="timesheet-outbox-v1",PENDING="timesheet-pending-v1",FLUSHLOCK="timesheet-flush-lock";
+  var SEND_TIMEOUT=cfg.SEND_TIMEOUT_MS||25000;
+  var BACKOFF=[30,60,120,300,600]; // seconds between retries; stays at 10 minutes after that
+  var sending=false,flushTimer=null,inflight={};
+
+  // The waiting list lives on the phone, so a timesheet survives closing the page or losing signal.
   function getOutbox(){try{return JSON.parse(localStorage.getItem(OUTBOX)||"[]")}catch(e){return []}}
-  function setOutbox(a){try{localStorage.setItem(OUTBOX,JSON.stringify(a))}catch(e){}}
-  function queue(p){
-    var q=getOutbox().filter(function(i){return i.subject!==p.subject});
-    q.push(p);setOutbox(q);showStatus();
-    say("You're offline. It will send by itself once you're back online and this page is open.");
+  function setOutbox(a){try{localStorage.setItem(OUTBOX,JSON.stringify(a));return true}catch(e){return false}}
+  function removeFromOutbox(id){setOutbox(getOutbox().filter(function(i){return i.id!==id}))}
+  function updateOutbox(id,fn){
+    var a=getOutbox();
+    for(var i=0;i<a.length;i++){if(a[i].id===id){fn(a[i]);break}}
+    setOutbox(a);
   }
+
+  // Every submission gets an ID made here on the phone. The same ID is reused on every retry of the
+  // same timesheet, so the server can tell a retry from a new submission and never saves or emails twice.
+  function newId(){
+    try{if(window.crypto&&crypto.randomUUID)return crypto.randomUUID()}catch(e){}
+    var s="";for(var i=0;i<4;i++)s+=Math.random().toString(36).slice(2,10);
+    return "t"+Date.now().toString(36)+s;
+  }
+  function hashStr(x){var h=5381;for(var i=0;i<x.length;i++){h=((h<<5)+h+x.charCodeAt(i))|0}return (h>>>0).toString(36)}
+  function getPending(){try{return JSON.parse(localStorage.getItem(PENDING)||"{}")}catch(e){return {}}}
+  function setPending(o){try{localStorage.setItem(PENDING,JSON.stringify(o))}catch(e){}}
+  function idFor(subject,data){
+    var h=hashStr(JSON.stringify(data)),m=getPending(),cur=m[subject];
+    if(cur&&cur.h===h)return cur.id;
+    var id=newId();
+    m[subject]={h:h,id:id,t:Date.now()};
+    var ks=Object.keys(m);
+    if(ks.length>20){ks.sort(function(a,b){return m[a].t-m[b].t});delete m[ks[0]]}
+    setPending(m);
+    return id;
+  }
+  function clearPending(subject){var m=getPending();delete m[subject];setPending(m)}
+
+  function fetchJson(url,opts){
+    var ctl=null,timer=null,guard=null;
+    try{ctl=new AbortController();opts.signal=ctl.signal;timer=setTimeout(function(){ctl.abort()},SEND_TIMEOUT)}catch(e){}
+    var chain=fetch(url,opts).then(function(r){return r.json()});
+    var limit=new Promise(function(_,reject){guard=setTimeout(function(){reject(new Error("timeout"))},SEND_TIMEOUT+2000)});
+    function clear(){clearTimeout(timer);clearTimeout(guard)}
+    return Promise.race([chain,limit]).then(function(j){clear();return j},function(err){clear();throw err});
+  }
+  // Always resolves to {ok, retry, retryAfter, error}.
   function postToManager(p){
     if(APPS_SCRIPT_URL){
-      return fetch(APPS_SCRIPT_URL,{
+      return fetchJson(APPS_SCRIPT_URL,{
         method:"POST",
         headers:{"Content-Type":"text/plain;charset=utf-8"},
-        body:JSON.stringify({subject:p.subject,message:p.message,csv:p.csv,data:p.data})
-      }).then(function(r){return r.json()}).then(function(j){return !!(j&&j.ok)});
+        body:JSON.stringify({submissionId:p.id,subject:p.subject,message:p.message,csv:p.csv,data:p.data})
+      }).then(function(j){
+        if(j&&j.ok)return {ok:true};
+        return {ok:false,retry:!(j&&j.retry===false),retryAfter:(j&&+j.retryAfter)||0,error:(j&&j.error)||""};
+      });
     }
     var fd=new FormData();
     fd.append("access_key",WEB3FORMS_KEY);
@@ -578,48 +639,148 @@ html{-webkit-text-size-adjust:100%}
     if(ATTACH_CSV){
       try{fd.append("attachment",new File([p.csv],p.filename||"timesheet.csv",{type:"text/csv"}))}catch(e){}
     }
-    return fetch("https://api.web3forms.com/submit",{
-      method:"POST",
-      headers:{Accept:"application/json"},
-      body:fd
-    }).then(function(r){return r.json()}).then(function(j){return !!(j&&j.success)});
-  }
-  function flushOutbox(){
-    if(flushing||!navigator.onLine||!getOutbox().length)return;
-    flushing=true;
-    (function next(){
-      var item=getOutbox()[0];
-      if(!item){flushing=false;showStatus();return}
-      postToManager(item).then(function(ok){
-        if(ok){var a=getOutbox();a.shift();setOutbox(a);say("Your waiting timesheet was submitted.");next()}
-        else{flushing=false;showStatus()}
-      }).catch(function(){flushing=false;showStatus()});
-    })();
-  }
-  function sendDirect(){
-    if(!(state.hdr.emp||"").trim()){say("Enter your name first.");$("emp").focus();return}
-    if(roster.length&&!findEmployee(state.hdr.emp)){say("Pick your name from the list.");$("emp").focus();return}
-    var csv=buildCsv(),btn=$("email");
-    var p={
-      subject:"Timesheet \u2013 "+state.hdr.emp+" \u2013 "+periodLabel(state.period),
-      from_name:state.hdr.emp,
-      message:summaryText((APPS_SCRIPT_URL||ATTACH_CSV)?"":csv),
-      csv:csv,
-      filename:"timesheet-"+(state.hdr.emp||"").replace(/[^\w]+/g,"-")+"-"+state.period+".csv",
-      data:sheetData()
-    };
-    if(!navigator.onLine){queue(p);return}
-    btn.disabled=true;btn.textContent="Sending\u2026";
-    function done(){btn.disabled=false;btn.textContent="Submit timesheet"}
-    postToManager(p).then(function(ok){
-      done();
-      if(ok)say("Timesheet submitted. You can tap Download CSV to keep a copy for your records.");
-      else{showCsv(csv);say("Couldn't submit. Check your signal and try again. The text below is a backup copy.")}
-    }).catch(function(){
-      done();
-      if(!navigator.onLine)queue(p);
-      else{showCsv(csv);say("Couldn't submit. Check your signal and try again. The text below is a backup copy.")}
+    return fetchJson("https://api.web3forms.com/submit",{method:"POST",headers:{Accept:"application/json"},body:fd}).then(function(j){
+      return j&&j.success?{ok:true}:{ok:false,retry:true,retryAfter:0,error:""};
     });
+  }
+
+  function nextDelay(tries){
+    var sec=BACKOFF[Math.min(tries,BACKOFF.length-1)];
+    return Math.round(sec*(1+Math.random()*0.3)*1000); // a little random spread so many phones don't retry together
+  }
+  // One try. The timesheet leaves the waiting list only when the server confirms it was saved.
+  function attempt(item){
+    inflight[item.id]=true;
+    return postToManager(item).catch(function(){return {ok:false,retry:true,retryAfter:0,error:""}}).then(function(res){
+      delete inflight[item.id];
+      if(res.ok){removeFromOutbox(item.id);clearPending(item.subject);return {done:true,ok:true}}
+      if(res.retry===false){removeFromOutbox(item.id);return {done:true,ok:false,error:res.error}}
+      var tries=(item.tries||0)+1;
+      var delay=Math.max(nextDelay(tries-1),(res.retryAfter||0)*1000);
+      updateOutbox(item.id,function(it){it.tries=tries;it.nextAt=Date.now()+delay;it.lastError=res.error||""});
+      return {done:false,ok:false,error:res.error};
+    });
+  }
+  // Retry sooner when the phone reconnects or the page is opened: within a few seconds, with a small spread.
+  function retrySoon(){
+    var soon=Date.now()+Math.round(Math.random()*5000),a=getOutbox();
+    a.forEach(function(i){if(!inflight[i.id]&&(i.nextAt||0)>soon)i.nextAt=soon});
+    setOutbox(a);
+  }
+  function scheduleFlush(minWait){
+    clearTimeout(flushTimer);flushTimer=null;
+    var a=getOutbox().filter(function(i){return !inflight[i.id]});
+    if(!a.length)return;
+    var soon=Infinity;
+    a.forEach(function(i){soon=Math.min(soon,i.nextAt||0)});
+    flushTimer=setTimeout(flushOutbox,Math.max(minWait||1000,soon-Date.now()));
+  }
+  function lockFlush(){ // stops two open tabs from sending the same timesheet at the same moment
+    try{
+      var t=+localStorage.getItem(FLUSHLOCK)||0;
+      if(Date.now()-t<SEND_TIMEOUT+8000)return false;
+      localStorage.setItem(FLUSHLOCK,String(Date.now()));
+    }catch(e){}
+    return true;
+  }
+  function unlockFlush(){try{localStorage.removeItem(FLUSHLOCK)}catch(e){}}
+  function flushOutbox(){
+    if(flushing||!navigator.onLine){showStatus();return}
+    var a=getOutbox(),now=Date.now(),item=null;
+    for(var i=0;i<a.length;i++){if(!inflight[a[i].id]&&(a[i].nextAt||0)<=now){item=a[i];break}}
+    if(!item){showStatus();scheduleFlush();return}
+    if(!lockFlush()){scheduleFlush(5000);return}
+    flushing=true;showStatus();
+    attempt(item).then(function(r){
+      flushing=false;unlockFlush();
+      if(r.ok)notify("Your waiting timesheet was submitted.","good");
+      else if(r.done)notify("A waiting timesheet couldn't be submitted: "+(r.error||"please check it and submit again."),"bad");
+      showStatus();
+      flushOutbox();
+    });
+  }
+
+  function filledDays(){
+    var n=0;
+    periodDates().forEach(function(k){
+      var e=state.entries[k];
+      if(e&&(e.client||e.notes||e.unit||e.loa||e.meal||e.km||e.type))n++;
+    });
+    return n;
+  }
+  function badValue(){
+    var bad=null,why="";
+    periodDates().forEach(function(k){
+      if(bad)return;
+      var e=state.entries[k]||{};
+      var meal=e.meal===""||e.meal==null?null:Number(e.meal),km=e.km===""||e.km==null?null:Number(e.km);
+      if(meal!==null&&(!isFinite(meal)||meal<0||meal>24)){bad={k:k,f:"meal"};why="Meal hours must be between 0 and 24 (check "+k+")."}
+      else if(km!==null&&(!isFinite(km)||km<0||km>10000)){bad={k:k,f:"km"};why="Personal km must be between 0 and 10,000 (check "+k+")."}
+    });
+    if(!bad)return "";
+    var inputs=document.querySelectorAll('input[data-k="'+bad.f+'"]');
+    for(var i=0;i<inputs.length;i++){
+      var tr=inputs[i].closest("tr");
+      if(tr&&tr.getAttribute("data-date")===bad.k){inputs[i].classList.add("invalid");inputs[i].scrollIntoView({block:"center"});inputs[i].focus();break}
+    }
+    return why;
+  }
+  function resetSend(){sending=false;var b=$("email");b.disabled=false;b.textContent="Submit timesheet"}
+  function sendDirect(){
+    if(sending)return; // ignore a second tap while one is in progress
+    if(!(state.hdr.emp||"").trim()){notify("Enter your name first.","bad");$("emp").focus();return}
+    if(!filledDays()){notify("Nothing to submit yet. Fill in at least one day.","bad");return}
+    var why=badValue();
+    if(why){notify(why,"bad");return}
+    var btn=$("email");
+    sending=true;btn.disabled=true;
+    function go(){
+      var csv=buildCsv(),data=sheetData();
+      var subject="Timesheet – "+state.hdr.emp+" – "+periodLabel(state.period);
+      var item={
+        id:idFor(subject,data),
+        subject:subject,
+        from_name:state.hdr.emp,
+        message:summaryText((APPS_SCRIPT_URL||ATTACH_CSV)?"":csv),
+        csv:csv,
+        filename:"timesheet-"+(state.hdr.emp||"").replace(/[^\w]+/g,"-")+"-"+state.period+".csv",
+        data:data,
+        tries:0,
+        nextAt:Date.now()+SEND_TIMEOUT+5000, // keeps the background retry away while this try is running
+        created:Date.now()
+      };
+      // Save it on the phone first, so it can't be lost if the page closes or the signal drops mid-send.
+      var q=getOutbox().filter(function(i){return i.subject!==subject||inflight[i.id]});
+      q.push(item);
+      if(!setOutbox(q))say("Couldn't save a waiting copy on this phone. Keep this page open until it says submitted.");
+      if(!navigator.onLine){
+        updateOutbox(item.id,function(it){it.nextAt=0});
+        resetSend();showStatus();
+        say("You're offline. Your timesheet is saved on this phone and will submit by itself when you're back online. Keep this page open.");
+        return;
+      }
+      btn.textContent="Sending…";
+      attempt(item).then(function(r){
+        resetSend();
+        if(r.ok)notify("Timesheet submitted. You can tap Download CSV to keep a copy for your records.","good");
+        else if(r.done){showCsv(csv);notify("Not submitted"+(r.error?": "+r.error:".")+" The text below is a backup copy.","bad")}
+        else notify("Not sent yet. Your timesheet is saved on this phone and will keep trying while this page is open.");
+        showStatus();scheduleFlush();
+      });
+    }
+    if(roster.length&&!findEmployee(state.hdr.emp)){
+      // Might be a new hire missing from this phone's saved list: refresh it once, then check again.
+      if(navigator.onLine){
+        say("Checking the employee list…");
+        loadRoster(true).then(function(){
+          if(findEmployee(state.hdr.emp))go();
+          else{resetSend();say("Pick your name from the list.");$("emp").focus()}
+        });
+        return;
+      }
+      resetSend();say("Pick your name from the list.");$("emp").focus();return;
+    }
+    go();
   }
 
   // Submit sends the timesheet to the script (which saves it to Airtable).
@@ -683,9 +844,10 @@ html{-webkit-text-size-adjust:100%}
   window.addEventListener("appinstalled",function(){$("install").hidden=true});
 
   setPeriod(periodForDate(new Date()));
-  window.addEventListener("online",function(){showStatus();flushOutbox();loadRoster()});
+  window.addEventListener("online",function(){showStatus();retrySoon();scheduleFlush();loadRoster()});
+  document.addEventListener("visibilitychange",function(){if(!document.hidden){retrySoon();flushOutbox()}});
   window.addEventListener("offline",showStatus);
-  showStatus();flushOutbox();loadRoster();setupInstall();
+  showStatus();retrySoon();flushOutbox();loadRoster();setupInstall();
   if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0){
     window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){})});
   }
