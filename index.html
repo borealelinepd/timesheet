@@ -63,7 +63,6 @@ button.b:disabled{opacity:.6;cursor:default}
 .sw.yellow{background:var(--yellow-soft)}
 .sw.green{background:var(--green-soft)}
 .hint a{color:var(--navy);font-weight:600}
-.hubback{display:inline-flex;align-items:center;min-height:40px;font-weight:600;font-size:15px;color:var(--navy);text-decoration:none}
 .install{background:var(--gold-soft);border:1px solid var(--gold);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:14px}
 .install .steps{margin-top:8px}
 .install ol{margin:6px 0 0 18px;padding:0}
@@ -139,7 +138,6 @@ html{-webkit-text-size-adjust:100%}
 </head>
 <body>
 <div class="wrap">
-  <a class="hubback noprint" href="/">‹ All apps</a>
   <div class="brand">
     <img src="logo.png" alt="Boreal E-line Pump Down" width="150" height="114">
     <h1>Boreal E-line Pump Down Timesheet</h1>
@@ -189,6 +187,7 @@ html{-webkit-text-size-adjust:100%}
 
   <div class="bar">
     <button class="b p" id="email" type="button">Submit timesheet</button>
+    <button class="b" id="share" type="button">Share CSV</button>
     <button class="b" id="csv" type="button">Download CSV</button>
     <button class="b" id="print" type="button">Print</button>
     <button class="b" id="clear" type="button">Clear this period</button>
@@ -463,6 +462,28 @@ html{-webkit-text-size-adjust:100%}
     say(ok?"CSV copied.":"Press and hold the text to copy it.");
   };
   $("closebox").onclick=function(){$("csvbox").hidden=true};
+  // Share CSV opens the phone's own share sheet (Mail, Gmail, Outlook, Messages, Drive...), so the file
+  // goes out from the person's own account, not from this app.
+  $("share").onclick=function(){
+    if(!(state.hdr.emp||"").trim()){notify("Enter your name first.","bad");$("emp").focus();return}
+    if(!filledDays()){notify("Nothing to share yet. Fill in at least one day.","bad");return}
+    var csv=buildCsv();
+    var name="timesheet-"+(state.hdr.emp||"").replace(/[^\w]+/g,"-")+"-"+state.period+".csv";
+    var title="Timesheet \u2013 "+state.hdr.emp+" \u2013 "+periodLabel(state.period);
+    var file=null;
+    try{file=new File([csv],name,{type:"text/csv"})}catch(e){}
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      navigator.share({files:[file],title:title,text:title}).catch(function(err){
+        if(err&&err.name==="AbortError")return; // person closed the share sheet
+        try{download(csv)}catch(e){}
+        showCsv(csv);notify("Sharing isn't available here, so the CSV was downloaded. Attach it to an email yourself.");
+      });
+      return;
+    }
+    try{download(csv)}catch(e){}
+    showCsv(csv);
+    notify("This browser can't open the share sheet, so the CSV was downloaded. Attach it to an email yourself.");
+  };
   $("csv").onclick=function(){
     var csv=buildCsv();
     try{download(csv)}catch(e){}
@@ -810,8 +831,7 @@ html{-webkit-text-size-adjust:100%}
     var force=/[?&]install(=|&|$)/.test(location.search); // add ?install to the address to preview this box on any device
     var pf=phoneType();
     if(!force){
-      var fromHub=false;try{var r=new URL(document.referrer);fromHub=r.origin===location.origin&&r.pathname==="/"}catch(e){}
-      if(!pf||isStandalone()||fromHub)return; // opened from the Boreal Apps hub: install the hub instead
+      if(!pf||isStandalone())return;
       try{var t=+localStorage.getItem(INSTALL_KEY)||0;if(t&&Date.now()-t<30*24*3600*1000)return}catch(e){}
     }
     var box=$("install"),steps=$("installSteps"),go=$("installGo");
