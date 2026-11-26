@@ -207,6 +207,21 @@ html{-webkit-text-size-adjust:100%}
 <script src="config.js"></script>
 <script>
 (function(){
+  // Paused: cover the page with a notice so nobody fills it in. Switch is PAUSED in config.js.
+  var c=window.TIMESHEET_CONFIG||{};
+  if(!c.PAUSED)return;
+  var d=document.createElement("div");
+  d.id="paused";d.setAttribute("role","alert");
+  d.style.cssText="position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px";
+  d.innerHTML='<div style="max-width:440px;text-align:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:28px 22px;box-shadow:var(--shadow)"><img src="logo.png" alt="" width="120" style="height:auto"><h1 style="margin:14px 0 8px">Timesheet not in use</h1><p style="margin:0;color:var(--muted)"></p></div>';
+  d.querySelector("p").textContent=c.PAUSED_MESSAGE||"The timesheet isn't in use right now.";
+  document.body.appendChild(d);
+  document.body.style.overflow="hidden";
+  var w=document.querySelector(".wrap");if(w){w.setAttribute("inert","");w.setAttribute("aria-hidden","true")}
+})();
+</script>
+<script>
+(function(){
   // ---- Edit these to change the dropdowns and defaults ----
   var DAY_TYPES=["Day off","Day off worked","Vacation/time off","Unpaid day taken"];
   var DEFAULTS={div:"Pumpdown",loc:"GP"};
