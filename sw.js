@@ -1,5 +1,5 @@
 // Caches the app so it opens offline. Bump CACHE to force everyone to refresh.
-var CACHE = "timesheet-v25";
+var CACHE = "timesheet-v26";
 var FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png", "apple-touch-icon.png", "logo.png", "config.js"];
 
 self.addEventListener("install", function (e) {

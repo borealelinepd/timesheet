@@ -27,7 +27,7 @@ th,td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:left}
 th{font-weight:600;font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:var(--navy);border-bottom:0;white-space:nowrap;padding:10px 7px}
 td.d{white-space:nowrap;font-weight:600;min-width:92px}
 td[data-label="Client"]{min-width:180px}
-td[data-label="Notes"]{min-width:180px}
+td[data-label="Notes/LSD"]{min-width:180px}
 td[data-label="Unit"]{min-width:80px}
 td[data-label="LOA"]{min-width:86px}
 td[data-label="Meal hours"],td[data-label="Personal km"]{min-width:96px}
@@ -115,7 +115,7 @@ html{-webkit-text-size-adjust:100%}
   td.d{grid-column:1;grid-row:1;align-self:center;font-size:16px}
   td.fdc{grid-column:2;grid-row:1;justify-self:end}
   td[data-label]::before{content:attr(data-label);display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:3px}
-  td[data-label="Client"],td[data-label="Notes"],td[data-label="Day off type (if any)"]{grid-column:1/-1}
+  td[data-label="Client"],td[data-label="Notes/LSD"],td[data-label="Day off type (if any)"]{grid-column:1/-1}
   input,select{font-size:16px;min-height:44px;width:100%!important;min-width:0!important}
   .fd{min-height:40px;font-size:14px;padding:6px 12px}
   tfoot,tfoot tr{display:flex}
@@ -177,7 +177,7 @@ html{-webkit-text-size-adjust:100%}
   <div class="grid">
     <table>
       <thead><tr>
-        <th>Date</th><th>Client</th><th>Notes</th><th>Unit</th><th>LOA</th>
+        <th>Date</th><th>Client</th><th>Notes/LSD</th><th>Unit</th><th>LOA</th>
         <th>Meal hours</th><th>Personal km</th><th>Day off type (if any)</th><th></th>
       </tr></thead>
       <tbody id="rows"></tbody>
@@ -289,7 +289,7 @@ html{-webkit-text-size-adjust:100%}
       html+='<tr class="'+(oc?'off-'+oc.c:'')+'" data-date="'+key+'">'+
         '<td class="d">'+WD[dt.getDay()]+' '+MON[p.m]+' '+day+(oc?'<span class="offtag">'+oc.n+' off</span>':'')+'</td>'+
         '<td data-label="Client"><input type="text" data-k="client" aria-label="Client" value="'+esc(e.client)+'"><div class="chips"><button type="button" class="chip" data-chip="Shop">Shop</button><button type="button" class="chip" data-chip="On call">On call</button></div></td>'+
-        '<td data-label="Notes"><input type="text" data-k="notes" aria-label="Notes" value="'+esc(e.notes)+'"></td>'+
+        '<td data-label="Notes/LSD"><input type="text" data-k="notes" aria-label="Notes or LSD" value="'+esc(e.notes)+'"></td>'+
         '<td data-label="Unit"><input type="text" data-k="unit" aria-label="Unit" value="'+esc(e.unit)+'" style="width:90px"></td>'+
         '<td data-label="LOA" class="ck"><input type="checkbox" data-k="loa" aria-label="LOA"'+(e.loa?' checked':'')+'></td>'+
         '<td class="n" data-label="Meal hours"><input type="number" min="0" step="0.25" inputmode="decimal" max="24" data-k="meal" aria-label="Meal hours" value="'+esc(e.meal)+'" style="width:84px"></td>'+
@@ -361,8 +361,19 @@ html{-webkit-text-size-adjust:100%}
     var t=ev.target;if(t.tagName!=="SELECT"&&t.type!=="checkbox")return;
     var date=t.closest("tr").getAttribute("data-date");
     (state.entries[date]=state.entries[date]||{})[t.getAttribute("data-k")]=(t.type==="checkbox"?(t.checked?"1":""):t.value);
+    if(t.getAttribute("data-k")==="type")typeToClient(t.closest("tr"));
     totals();save();
   });
+  // A day off (other than "Day off worked") puts its name in Client, so Client is never blank.
+  function isOffLabel(v){return DAY_TYPES.indexOf(v)>=0}
+  function typeToClient(tr){
+    var sel=tr.querySelector('[data-k="type"]'),inp=tr.querySelector('[data-k="client"]');if(!sel||!inp)return;
+    var v=sel.value,cur=inp.value.trim(),date=tr.getAttribute("data-date");
+    if(v&&v!=="Day off worked"){if(!cur||isOffLabel(cur))inp.value=v}
+    else if(isOffLabel(cur))inp.value="";
+    (state.entries[date]=state.entries[date]||{}).client=inp.value;
+    syncChips(tr);
+  }
   ["emp","pos","div","loc"].forEach(function(id){
     $(id).addEventListener("input",function(){state.hdr[id]=$(id).value;save()});
   });
@@ -445,7 +456,7 @@ html{-webkit-text-size-adjust:100%}
     out.push(["Location",state.hdr.loc].map(q).join(","));
     out.push(["Pay period",periodLabel(state.period)].map(q).join(","));
     out.push("");
-    out.push(["Date","Client","Notes","Unit","LOA","Meal hours","Personal km","Day off type"].map(q).join(","));
+    out.push(["Date","Client","Notes/LSD","Unit","LOA","Meal hours","Personal km","Day off type"].map(q).join(","));
     periodDates().forEach(function(k){
       var e=state.entries[k]||{};
       out.push([k,e.client,e.notes,e.unit,(e.loa?"1":""),e.meal,e.km,e.type].map(q).join(","));
@@ -513,7 +524,7 @@ html{-webkit-text-size-adjust:100%}
       period:periodLabel(state.period),
       rows:periodDates().map(function(k){
         var e=state.entries[k]||{};
-        return {date:k,client:e.client||"",notes:e.notes||"",unit:e.unit||"",loa:e.loa?"1":"",meal:e.meal||"",km:e.km||"",type:e.type||""};
+        return {date:k,client:e.client||(e.type&&e.type!=="Day off worked"?e.type:""),notes:e.notes||"",unit:e.unit||"",loa:e.loa?"1":"",meal:e.meal||"",km:e.km||"",type:e.type||""};
       }),
       totals:{loa:t.loa,meal:t.meal.toFixed(2),km:Math.round(t.km*10)/10,days:typesList(t.counts)}
     };
