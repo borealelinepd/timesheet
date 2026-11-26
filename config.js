@@ -2,7 +2,7 @@
 window.TIMESHEET_CONFIG = {
   // On/off switch. true = page shows a "not in use" notice and can't be filled in or submitted.
   // Set to false to put the timesheet back in use.
-  PAUSED: true,
+  PAUSED: false,
   PAUSED_MESSAGE: "The timesheet isn't in use right now. Please don't fill it out. Your manager will let you know when it's back.",
 
   // Paste your Google Apps Script Web app URL between the quotes (it ends in /exec).
