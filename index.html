@@ -76,6 +76,7 @@ button.b:disabled{opacity:.6;cursor:default}
 .brand{display:flex;align-items:center;gap:20px;margin-bottom:14px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:14px;padding:14px 20px;box-shadow:var(--shadow)}
 .brand img{width:140px;height:auto;display:block;flex:none}
 .brand h1{margin:0}
+.help{margin-left:auto;flex:none;font-weight:600;font-size:14px;color:var(--navy);text-decoration:none;border:1px solid #cdd3dd;border-radius:20px;padding:0 14px;min-height:40px;display:flex;align-items:center;white-space:nowrap;background:var(--surface)}
 .hint{margin:0 0 12px;font-size:13px;color:var(--muted)}
 .hint p{margin:0 0 4px}
 td.ck{text-align:center}
@@ -141,6 +142,7 @@ html{-webkit-text-size-adjust:100%}
   <div class="brand">
     <img src="logo.png" alt="Boreal E-line Pump Down" width="150" height="114">
     <h1>Boreal E-line Pump Down Timesheet</h1>
+    <a class="help noprint" href="help.html">? Help</a>
   </div>
   <p class="status" id="status" role="status"></p>
 
@@ -169,6 +171,7 @@ html{-webkit-text-size-adjust:100%}
   </div>
 
   <div class="hint">
+    <p>New to this? <a href="help.html" style="color:var(--navy);font-weight:600">Read the how-to guide</a>.</p>
     <p><b>Client:</b> type the client name. If you were in the shop, tap <b>Shop</b>. If you were on shift on a weekend but weren't called out, tap <b>On call</b>.</p>
     <p class="legend"><b>Scheduled days off:</b> shaded rows are each crew's scheduled days off. <span class="sw blue"></span>Blue <span class="sw yellow"></span>Yellow <span class="sw green"></span>Green</p>
     <p><b>Day off type:</b> only fill this in on days you take off. If you work on one of your scheduled days off, choose <b>Day off worked</b>. Leave it blank on your regular workdays.</p>

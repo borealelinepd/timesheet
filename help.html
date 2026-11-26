@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How to use the Boreal Timesheet</title>
+<meta name="theme-color" content="#001036">
+<link rel="icon" href="icon-192.png">
+<style>
+/* Help page for the timesheet: same colours as the app, readable on a phone, works offline. */
+:root{--navy:#001036;--gold:#e19a11;--bg:#eef0f3;--card:#fff;--ink:#0a1633;--mute:#5b6678;--line:#dde1e8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,system-ui,sans-serif}
+header{position:sticky;top:0;z-index:2;background:var(--card);border-bottom:1px solid var(--line);border-top:4px solid var(--gold);padding:6px max(4vw,14px)}
+header a{color:var(--navy);font-weight:700;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
+nav{display:flex;gap:8px;overflow-x:auto;padding:10px max(4vw,14px);border-bottom:1px solid var(--line)}
+nav a{flex:none;font-size:14px;color:var(--navy);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:20px;padding:6px 12px}
+main{max-width:760px;margin:0 auto;padding:6px max(4vw,14px) 60px}
+h1{font-size:28px;line-height:1.15;margin:18px 0 6px;color:var(--navy)}
+h2{font-size:21px;margin:34px 0 8px;color:var(--navy);scroll-margin-top:110px}
+p,li{max-width:68ch}
+li{margin:4px 0}
+img{display:block;width:100%;max-width:390px;height:auto;border:1px solid var(--line);border-radius:12px;margin:14px 0;background:#fff}
+table{border-collapse:collapse;width:100%;font-size:15px;margin:10px 0;background:var(--card)}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:var(--navy);color:#fff;font-weight:600}
+td:first-child{font-weight:700;white-space:nowrap}
+.lead{color:var(--mute)}
+</style>
+</head>
+<body>
+<header><a href="./">‹ Back to the timesheet</a></header>
+<nav>
+  <a href="#open">Open it</a><a href="#details">Your details</a><a href="#days">Each day</a><a href="#submit">Submit</a><a href="#tips">Tips</a>
+</nav>
+<main>
+<h1>How to use the Boreal Timesheet</h1>
+<p class="lead">Fill in your days as you go, then submit at the end of each pay period. No account or password is needed, and it works with no signal.</p>
+
+<h2 id="open">1. Open the timesheet</h2>
+<p>Go to <b>borealelinepd.github.io/timesheet</b> on your phone or computer.</p>
+<p><b>Add it to your home screen</b> so it opens like an app and works with no signal. On a phone, a box at the top of the page offers this: tap <b>Show me how</b> and follow the steps.</p>
+<ul>
+<li><b>iPhone:</b> open the link in Safari, tap the Share button (square with an arrow), then <b>Add to Home Screen</b>.</li>
+<li><b>Android:</b> in Chrome, tap the three dots, then <b>Install app</b> or <b>Add to Home screen</b>.</li>
+</ul>
+<p>Open it once with signal. After that it works anywhere, even with no service.</p>
+
+<h2 id="details">2. Your details and pay period</h2>
+<p>Start typing your name and pick it from the list. Your position, division and location fill in for you. If your name isn't on the list, tell your manager.</p>
+<img src="help/name.jpg" alt="Typing a name shows matching employees to pick from" loading="lazy">
+<p>The page opens on the <b>current pay period</b> (the 1st to the 15th, or the 16th to the end of the month). Use the <b>‹ ›</b> arrows to move to another period. <b>Go to current period</b> brings you back.</p>
+<img src="help/header.jpg" alt="Your details filled in, with the pay period arrows" loading="lazy">
+<p>Your details are remembered on your phone, so you only do this once.</p>
+
+<h2 id="days">3. Fill in each day</h2>
+<p>Each day of the pay period has its own card. Fill in what applies and leave the rest blank.</p>
+<table>
+<tr><th>Field</th><th>What to enter</th></tr>
+<tr><td>Client</td><td>The client you worked for. In the shop: tap <b>Shop</b>. On shift on a weekend but not called out: tap <b>On call</b>.</td></tr>
+<tr><td>Notes/LSD</td><td>The LSD or location, plus any notes.</td></tr>
+<tr><td>Unit</td><td>Your unit number.</td></tr>
+<tr><td>LOA</td><td>Tick if you got LOA that day.</td></tr>
+<tr><td>Meal hours</td><td>Meal hours for the day (up to 24).</td></tr>
+<tr><td>Personal km</td><td>Personal km driven that day.</td></tr>
+<tr><td>Day off type</td><td>Only on days off: <b>Day off</b>, <b>Vacation/time off</b> or <b>Unpaid day taken</b>. If you worked a scheduled day off, pick <b>Day off worked</b>. Leave blank on regular workdays.</td></tr>
+</table>
+<p><b>Fill from above</b> copies everything from the day before. Use it when today is the same as yesterday, then change anything that's different. On a computer, <b>Ctrl+D</b> copies just the box you're in.</p>
+<img src="help/day.jpg" alt="A filled-in day, and the next day copied with Fill from above" loading="lazy">
+<p><b>Days off fill in Client for you.</b> Picking Day off, Vacation/time off or Unpaid day taken puts that text in Client, so Client is never blank. Day off worked leaves Client for you to fill in.</p>
+<p><b>Shaded cards</b> are each crew's scheduled days off (Blue, Yellow or Green). The crew is written under the date.</p>
+<img src="help/shop_dayoff.jpg" alt="A shop day using the Shop button, and a day off that filled in Client by itself" loading="lazy">
+
+<h2 id="submit">4. Save, submit and fix mistakes</h2>
+<p><b>It saves as you type.</b> Everything stays on your phone, so you can fill in a day at a time. The line under the logo shows when it last saved.</p>
+<p><b>Totals</b> at the bottom add up your LOA, meal hours, km and days off for the period.</p>
+<img src="help/bottom.jpg" alt="Totals and the Submit timesheet button at the bottom of the page" loading="lazy">
+<p><b>Submit at the end of the pay period</b> (the 15th and the last day of the month):</p>
+<ol>
+<li>Check your days and totals.</li>
+<li>Tap <b>Submit timesheet</b>.</li>
+<li>Wait for the message that says it was submitted.</li>
+</ol>
+<p><b>No signal?</b> Tap Submit anyway. The timesheet waits on your phone and sends by itself when you're back online. Keep the page open until it says submitted.</p>
+<p><b>Made a mistake?</b> Fix the day and tap Submit again. Once the office has exported a day, it's locked and can't be changed from the timesheet. Ask your manager to fix it.</p>
+<p><b>Other buttons:</b></p>
+<ul>
+<li><b>Download CSV</b> or <b>Share CSV</b>: a copy for your own records.</li>
+<li><b>Print</b>: a paper copy.</li>
+<li><b>Clear this period</b>: wipes the period on your phone. Tap twice to confirm.</li>
+<li><b>Add pay-day reminders to your calendar</b>: reminders on the 15th and the last day of each month.</li>
+</ul>
+
+<h2 id="tips">5. Quick tips</h2>
+<ul>
+<li><b>Fill it in daily.</b> It takes a minute and nothing gets forgotten by pay day.</li>
+<li><b>Use the same phone.</b> Your saved days live on that phone. A different phone or browser starts blank.</li>
+<li><b>A box turns red?</b> That value is out of range (meal hours over 24, or km over 10,000). Fix it and submit again.</li>
+<li><b>"Pick your name from the list"</b> means the name was typed but not chosen. Tap your name in the list.</li>
+<li><b>Page looks old?</b> Open it once with signal. It updates itself the next time you open it.</li>
+</ul>
+<p><a href="./" style="color:var(--navy);font-weight:700">‹ Back to the timesheet</a></p>
+</main>
+</body>
+</html>
