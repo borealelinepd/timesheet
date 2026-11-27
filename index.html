@@ -32,7 +32,9 @@ td[data-label="Unit"]{min-width:80px}
 td[data-label="LOA"]{min-width:86px}
 td[data-label="Meal hours"],td[data-label="Personal km"]{min-width:96px}
 td[data-label="Day off type (if any)"]{min-width:190px}
-td.fdc{white-space:nowrap}
+td.fdc{white-space:nowrap;display:flex;gap:6px;align-items:center}
+.fd[data-clear]{color:#8a1c2b}
+@media (min-width:721px){td.fdc{display:table-cell}td.fdc .fd{display:block;width:100%;padding:4px 8px}td.fdc .fd+.fd{margin-top:4px}}
 tr.off-blue td{background:var(--blue-soft)}
 tr.off-yellow td{background:var(--yellow-soft)}
 tr.off-green td{background:var(--green-soft)}
@@ -321,7 +323,7 @@ html{-webkit-text-size-adjust:100%}
         '<td class="n" data-label="Meal hours"><input type="number" min="0" step="0.25" inputmode="decimal" max="24" data-k="meal" aria-label="Meal hours" value="'+esc(e.meal)+'" style="width:84px"></td>'+
         '<td class="n" data-label="Personal km"><input type="number" min="0" step="1" inputmode="decimal" max="10000" data-k="km" aria-label="Personal km" value="'+esc(e.km)+'" style="width:90px"></td>'+
         '<td data-label="Day off type (if any)"><select data-k="type" aria-label="Day off type. Only for days off, or a scheduled day off you worked. Leave blank on regular workdays" style="min-width:150px">'+opts(DAY_TYPES,e.type)+'</select></td>'+
-        '<td class="fdc"><button type="button" class="fd" data-fill="1" title="Copy everything from the row above"'+(day===p.start?' disabled':'')+'>Fill from above</button></td>'+
+        '<td class="fdc"><button type="button" class="fd" data-fill="1" title="Copy everything from the row above"'+(day===p.start?' disabled':'')+'>Fill from above</button><button type="button" class="fd" data-clear="1" title="Empty this day">Clear day</button></td>'+
       '</tr>';
     }
     $("rows").innerHTML=html;
@@ -392,10 +394,11 @@ html{-webkit-text-size-adjust:100%}
   });
   // A day off (other than "Day off worked") puts its name in Client, so Client is never blank.
   function isOffLabel(v){return DAY_TYPES.indexOf(v)>=0}
+  function isChipLabel(v){v=(v||"").trim().toLowerCase();return v==="shop"||v==="on call"}
   function typeToClient(tr){
     var sel=tr.querySelector('[data-k="type"]'),inp=tr.querySelector('[data-k="client"]');if(!sel||!inp)return;
     var v=sel.value,cur=inp.value.trim(),date=tr.getAttribute("data-date");
-    if(v&&v!=="Day off worked"){if(!cur||isOffLabel(cur))inp.value=v}
+    if(v&&v!=="Day off worked"){if(!cur||isOffLabel(cur)||isChipLabel(cur))inp.value=v} // a day off replaces Shop / On call
     else if(isOffLabel(cur))inp.value="";
     (state.entries[date]=state.entries[date]||{}).client=inp.value;
     syncChips(tr);
@@ -411,9 +414,16 @@ html{-webkit-text-size-adjust:100%}
   $("rows").addEventListener("click",function(ev){
     var b=ev.target.closest("[data-chip]");if(!b)return;
     var tr=b.closest("tr"),inp=tr.querySelector('[data-k="client"]');
-    inp.value=b.classList.contains("on")?"":b.getAttribute("data-chip");
+    var turningOn=!b.classList.contains("on");
+    inp.value=turningOn?b.getAttribute("data-chip"):"";
     var date=tr.getAttribute("data-date");
     (state.entries[date]=state.entries[date]||{}).client=inp.value;
+    // Shop / On call means you worked, so it replaces a day-off type (but "Day off worked" fits with them).
+    var sel=tr.querySelector('[data-k="type"]');
+    if(turningOn&&sel&&sel.value&&sel.value!=="Day off worked"){
+      sel.value="";state.entries[date].type="";
+      say("Day off type removed: "+b.getAttribute("data-chip")+" replaces it.");
+    }
     syncChips(tr);totals();save();
   });
   document.addEventListener("input",function(e){if(e.target&&e.target.classList)e.target.classList.remove("invalid")});
@@ -428,6 +438,18 @@ html{-webkit-text-size-adjust:100%}
     (state.entries[date]=state.entries[date]||{})[k]=v;
     if(k==="client")syncChips(tr);
   }
+  // Clear day: empties every field in that one day.
+  $("rows").addEventListener("click",function(ev){
+    var b=ev.target.closest("[data-clear]");if(!b)return;
+    var tr=b.closest("tr"),date=tr.getAttribute("data-date");
+    FIELDS.forEach(function(k){
+      var el=tr.querySelector('[data-k="'+k+'"]');if(!el)return;
+      if(el.type==="checkbox")el.checked=false;else el.value="";
+    });
+    delete state.entries[date];
+    syncChips(tr);totals();save();
+    say("Cleared "+tr.querySelector("td.d").firstChild.textContent+".");
+  });
   $("rows").addEventListener("click",function(ev){
     var b=ev.target.closest("[data-fill]");if(!b||b.disabled)return;
     var tr=b.closest("tr"),prev=tr.previousElementSibling;if(!prev)return;
