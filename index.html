@@ -532,7 +532,11 @@ html{-webkit-text-size-adjust:100%}
     out.push(["Totals","","","",t.loa,t.meal.toFixed(2),t.km,typesList(t.counts).join("; ")].map(q).join(","));
     return out.join("\n");
   }
-  function csvName(){return "timesheet-"+state.period+".csv"}
+  // File name: TS_Name_YYYY-MM-DD_to_DD, e.g. TS_John-Doe_2026-11-16_to_30.csv (sorts by date, shows the pay period)
+  function csvName(){
+    var o=parsePeriod(state.period),who=(state.hdr.emp||"").trim().replace(/[^\w]+/g,"-").replace(/^-+|-+$/g,"")||"Employee";
+    return "TS_"+who+"_"+o.y+"-"+pad(o.m+1)+"-"+pad(o.start)+"_to_"+pad(o.end)+".csv";
+  }
   function download(csv){
     var blob=new Blob([csv],{type:"text/csv"});
     var a=document.createElement("a");
@@ -562,7 +566,7 @@ html{-webkit-text-size-adjust:100%}
     if(!(state.hdr.emp||"").trim()){notify("Enter your name first.","bad");$("emp").focus();return}
     if(!filledDays()){notify("Nothing to share yet. Fill in at least one day.","bad");return}
     var csv=buildCsv();
-    var name="timesheet-"+(state.hdr.emp||"").replace(/[^\w]+/g,"-")+"-"+state.period+".csv";
+    var name=csvName();
     var title="Timesheet \u2013 "+state.hdr.emp+" \u2013 "+periodLabel(state.period);
     var file=null;
     try{file=new File([csv],name,{type:"text/csv"})}catch(e){}
@@ -860,7 +864,7 @@ html{-webkit-text-size-adjust:100%}
         from_name:state.hdr.emp,
         message:summaryText((APPS_SCRIPT_URL||ATTACH_CSV)?"":csv),
         csv:csv,
-        filename:"timesheet-"+(state.hdr.emp||"").replace(/[^\w]+/g,"-")+"-"+state.period+".csv",
+        filename:csvName(),
         data:data,
         tries:0,
         nextAt:Date.now()+SEND_TIMEOUT+5000, // keeps the background retry away while this try is running
