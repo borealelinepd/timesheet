@@ -441,6 +441,13 @@ html{-webkit-text-size-adjust:100%}
   // Clear day: empties every field in that one day.
   $("rows").addEventListener("click",function(ev){
     var b=ev.target.closest("[data-clear]");if(!b)return;
+    // First tap arms the button ("Tap again"); a second tap within 3 seconds clears. Same label length, so the box doesn't grow.
+    if(!b.getAttribute("data-armed")){
+      b.setAttribute("data-armed","1");b.textContent="Tap again";b.style.background="#fde8ea";
+      setTimeout(function(){b.removeAttribute("data-armed");b.textContent="Clear day";b.style.background=""},3000);
+      return;
+    }
+    b.removeAttribute("data-armed");b.textContent="Clear day";b.style.background="";
     var tr=b.closest("tr"),date=tr.getAttribute("data-date");
     FIELDS.forEach(function(k){
       var el=tr.querySelector('[data-k="'+k+'"]');if(!el)return;
