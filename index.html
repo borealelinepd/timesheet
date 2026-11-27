@@ -134,7 +134,30 @@ html{-webkit-text-size-adjust:100%}
   .brand h1{font-size:18px}
 }
 @page{size:landscape}
-@media print{body{background:#fff}.bar,.fd,.csvbox,.chips,.install,.noprint{display:none}.grid,.hdr,.brand{box-shadow:none}.grid{overflow:visible;border:0}table{min-width:0;font-size:11px}th{background:#e9ebf0;color:#000}tr.off-blue td,tr.off-yellow td,tr.off-green td{background:#fff}input,select{border:0;padding:2px;appearance:none}}
+.ptxt{display:none}
+@media print{
+  .ptxt{display:block;white-space:pre-wrap;word-break:break-word;font-size:10.5px;line-height:1.25}
+  body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .bar,.fd,.csvbox,.chips,.install,.noprint,.hint,.status,.help,.cur,#toast,.step .b{display:none!important}
+  .wrap{max-width:none;padding:0}
+  .brand{gap:12px;margin:0 0 6px;padding:4px 10px;border-radius:0;box-shadow:none;border-top-width:3px}
+  .brand img{width:46px;height:auto}
+  .brand h1{font-size:16px}
+  .hdr{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 6px;padding:5px 10px;border-radius:0;box-shadow:none}
+  .hdr>div{grid-column:auto!important;min-width:0}
+  .hdr label{font-size:9px;margin:0 0 1px}
+  .hdr input{font-size:12px;padding:1px 2px}
+  #pcur{font-size:12px;font-weight:600;padding:0}
+  .grid{overflow:visible;border:0;border-radius:0;box-shadow:none}
+  table{min-width:0;width:100%;font-size:10.5px}
+  th{background:#e9ebf0;color:#000;padding:3px 5px;font-size:9.5px}
+  td,td[data-label]{padding:1px 5px;min-width:0!important}
+  td.d{min-width:0;font-size:10.5px}
+  tr{break-inside:avoid}
+  tr.off-blue td,tr.off-yellow td,tr.off-green td{background:#fff}
+  input,select{border:0;padding:1px 2px;font-size:10.5px;appearance:none;background:transparent;width:100%!important}
+  tfoot td{padding:3px 5px;font-weight:600}
+}
 </style>
 </head>
 <body>
@@ -435,6 +458,19 @@ html{-webkit-text-size-adjust:100%}
   $("prev").onclick=function(){setPeriod(shiftPeriod(state.period,-1))};
   $("next").onclick=function(){setPeriod(shiftPeriod(state.period,1))};
   $("now").onclick=function(){setPeriod(periodForDate(new Date()))};
+  // Printing: text boxes would clip long notes, so show their text as wrapped plain text for the print only.
+  var swapped=[];
+  window.addEventListener("beforeprint",function(){
+    try{document.activeElement&&document.activeElement.blur()}catch(e){}
+    var ins=document.querySelectorAll("#rows input[type=text]");
+    for(var i=0;i<ins.length;i++){
+      var span=document.createElement("span");span.className="ptxt";span.textContent=ins[i].value;
+      ins[i].style.display="none";ins[i].parentNode.insertBefore(span,ins[i]);swapped.push([ins[i],span]);
+    }
+  });
+  window.addEventListener("afterprint",function(){
+    swapped.forEach(function(x){x[0].style.display="";if(x[1].parentNode)x[1].parentNode.removeChild(x[1])});swapped=[];
+  });
   $("print").onclick=function(){window.print()};
   var clearTimer=null;
   function resetClear(){clearTimeout(clearTimer);clearTimer=null;$("clear").textContent="Clear this period"}
